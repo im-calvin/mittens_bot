@@ -1,4 +1,5 @@
 # bot.py
+from operator import indexOf
 import os
 
 import discord
@@ -23,23 +24,36 @@ async def on_message(message):
     if message.author == client.user:  # base case
         return
     # if jap is detected & the confidence is high
-    if translate_client.detect_language(message.content)["language"] == "ja" and translate_client.detect_language(message.content)["confidence"] > 0.95:
+    if translate_client.detect_language(message.content)["language"] != "en" and translate_client.detect_language(message.content)["confidence"] > 0.95:
         transl_msg = translate_client.translate(message.content, "en", "text")[
             "translatedText"]  # transl_msg = translated form of message
         # if the message contains a ':' and is less than 12 characters (to catch stray emotes)
         # if message.content.find(':') != -1 and len(message.content) < 12:
         #     return
-        index1 = transl_msg.find('<')  # type int
-        index2 = transl_msg.find('>')
-        if index1 > -1 and index2 > -1:  # if we found two indexes
-            # contains the str for the emote
-            emote = transl_msg[index1:index2+1]
+
+        # so that the bot does not re-output links
+        if message.content.startswith("https://"):
+            return
+
+        # making the emotes format themselves properly!
+        if "<:" in message.content and ":>" in message.content:
+            indices_open = [i.start() for i in re.finditer('<', transl_msg)]
+            indices_closed = [i.start() for i in re.finditer('>', transl_msg)]
+            # index1 = transl_msg.find('<')  # location of the first '<'
+            # index2 = transl_msg.find('>')
+
+            # if there's an emote there should be equal number of < and >
+            for i in indices_open:
+                emote = transl_msg[indices_open:indices_closed] # contains the str for the emote
             # remove all the " " inside the emote (hopefully this makes it output properly)
-            emote = emote.replace(" ", "")
-            main_txt = transl_msg[0:index1]
+                emote = emote.replace(" ", "")
+            # all the text that does not contain the emotes
+                main_txt = transl_msg[0:indices_open]
             await message.channel.send(main_txt + emote)
         else:
             await message.channel.send(transl_msg)
+
+    # for gura-chan
     if message.content == "a":
         await message.channel.send("サメです！")
 
