@@ -27,15 +27,16 @@ async def on_message(message):
         transl_msg = translate_client.translate(message.content, "en", "text")[
             "translatedText"]  # transl_msg = translated form of message
         # if the message contains a ':' and is less than 12 characters (to catch stray emotes)
-        if message.content.find(':') != -1 and len(message.content) < 12:
-            return
+        # if message.content.find(':') != -1 and len(message.content) < 12:
+        #     return
         index1 = transl_msg.find('<')  # type int
         index2 = transl_msg.find('>')
         if index1 > -1 and index2 > -1:  # if we found two indexes
-            emote = transl_msg(index1, index2, 1)  # emote is type str
+            # contains the str for the emote
+            emote = transl_msg[index1:index2+1]
             # remove all the " " inside the emote (hopefully this makes it output properly)
-            emote.replace(" ", "")
-            main_txt = transl_msg(0, index1-1, 1)
+            emote = emote.replace(" ", "")
+            main_txt = transl_msg[0:index1]
             await message.channel.send(main_txt + emote)
         else:
             await message.channel.send(transl_msg)
