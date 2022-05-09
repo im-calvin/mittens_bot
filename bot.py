@@ -1,5 +1,4 @@
 # bot.py
-from operator import indexOf
 import os
 
 import discord
@@ -28,6 +27,7 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:  # base case
         return
+    # so that the bot does not re-output links
     if message.content.startswith("https://"):
         return
     if message.content.startswith(":"):
@@ -40,18 +40,9 @@ async def on_message(message):
         if "@" in transl_msg:
             transl_msg = transl_msg.replace("@ ", "@")
 
-        # so that the bot does not re-output links
-
-        # making the emotes format themselves properly!
+    # making the emotes format themselves properly!
 
         # "indices_open" is the list that contains the index's for the '<' char
-
-        # custom_emojis = re.findall(r'<:\w*:\d*>', message.content)
-        # custom_emojis = [int(e.split(':')[1].replace('>', '')) for e in custom_emojis]
-        # custom_emojis = [discord.utils.get(client.get_all_emojis(), id=e) for e in custom_emojis]
-
-    # From now, `custom_emojis` is `list` of `discord.Emoji` that `msg` contains.
-        # From now, `custom_emojis` is `list` of `discord.Emoji` that `msg` contains.
         indices_open = [i.start() for i in re.finditer('<', transl_msg)]
         indices_closed = [i.start() for i in re.finditer('>', transl_msg)]
         # if there's an emote there should be equal number of < and >
@@ -59,22 +50,6 @@ async def on_message(message):
             # splicing each emote from transl_msg into a list of str
             emote_id = [int(s) for s in transl_msg[indices_open[i]:indices_closed[i]].split() if s.isdigit()]
             emote_object = client.get_emoji(emote_id[i])
-
-        # remove all the " " inside the emote
-        # emote[i] = emote[i].replace(" ", "")
-        #     # only text after first emote and before last emote
-        #     if i < len(indices_open):
-        #         main_txt = [transl_msg[indices_closed[i]:indices_open[i+1]]]
-        #     # all the text between the first and last emote
-        #     body_txt = emote[i] + main_txt[i]
-        # # all the text that does not contain the emotes
-        # # text before first emote
-        # main_txt_start = transl_msg[0:indices_open[0]]
-        # main_txt_end = transl_msg[indices_closed[len(indices_closed)]:len(
-        #     transl_msg)]  # text after last emote
-        # await message.channel.send(main_txt_start + body_txt + main_txt_end)
-
-        # let's try slicing the text and then getting the id of the emote and then checking to see if bot can use, even if one fails, cleanse all of it
 
         if (("<:" in transl_msg and ">" in transl_msg) or ("<a:" in transl_msg)):
             # check if the msg contains an emoji that it cannot use:
@@ -87,9 +62,8 @@ async def on_message(message):
                         transl_msg[index1:index2], "")
                     if transl_msg.find('<') > -1:
                         break
-        else:
-            transl_msg = transl_msg.replace(": ", ":")
-
+            else:
+                transl_msg = transl_msg.replace(": ", ":")
         await message.channel.send(transl_msg)
 
     # for gura-chan
