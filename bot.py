@@ -1,6 +1,5 @@
 # bot.py
 import os
-from socket import MsgFlag
 
 import discord
 from dotenv import load_dotenv
@@ -21,6 +20,60 @@ translate_client = translate.Client.from_service_account_json(
     'googleapi.json')
 
 
+@client.event
+async def on_ready():
+    print("もしもし")
+
+dict = {}
+transl_msg = ""
+
+
+@client.event
+async def on_message(message):
+
+    if message.author == client.user:  # base case
+        return
+    if message.author.bot:  # bot doesn't respond to other bots
+        return
+    if message.content.startswith("https://"):  # no links
+        return
+    if message.content.startswith("<:"):  # no emotes
+        return
+    # for gura-chan
+    if message.content == "a":
+        await message.channel.send("サメです！")
+
+    transl_msg = translator(message)
+
+    bot_msg = await message.channel.send(transl_msg)
+    dict[message.id] = bot_msg
+
+
+@client.event
+async def on_message_edit(before, after):
+
+    if after.author == client.user:  # base case
+        return
+    if after.author.bot:  # bot doesn't respond to other bots
+        return
+    if after.content.startswith("https://"):  # no links
+        return
+    if after.content.startswith("<:"):  # no emotes
+        return
+    # for gura-chan
+    if after.content == "a":
+        await after.channel.send("サメです！")
+
+    bot_msg = dict[after.id]
+
+    transl_msg = translator(after)
+
+    channel = after.channel  # channel object
+    # message object (from user)
+    message = await channel.fetch_message(bot_msg.id)
+    await message.edit(content=transl_msg)
+
+
 def sanitizer(msg):
     while True:
         # since slicing is exclusive of index1, inclusive of index2
@@ -32,23 +85,7 @@ def sanitizer(msg):
             return
 
 
-@client.event
-async def on_ready():
-    print("もしもし")
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:  # base case
-        return
-    if message.author.bot:  # bot doesn't respond to other bots
-        return
-    if message.content.startswith("https://"):
-        return
-    if message.content.startswith("<:"):
-        return
-    # for gura-chan
-    if message.content == "a":
-        await message.channel.send("サメです！")
+def translator(message):
     lang = translate_client.detect_language(message.content)["language"]
 
     if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko":
@@ -63,31 +100,7 @@ async def on_message(message):
         # making the emotes format themselves properly!
             if (("<:" in transl_msg and ">" in transl_msg) or ("<a:" in transl_msg and ">" in transl_msg)):
                 sanitizer(transl_msg)
-            bot_msg = await message.channel.send(transl_msg)
-            global bot_id
-            bot_id = bot_msg.id
-            bot_msg
+            return transl_msg
 
-
-@client.event
-async def on_message_edit(before, after):
-    channel = after.channel # channel object
-    message = await channel.fetch_message(bot_id) # message object (from user)
-
-    lang = translate_client.detect_language(after.content)["language"]
-
-    if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko":
-        # zh-TW = traditional, zh-CN = simplified
-        if translate_client.detect_language(after.content)["confidence"] > 0.95:
-            transl_msg = translate_client.translate(after.content, "en", "text")[
-                "translatedText"]  # transl_msg = translated form of message
-
-            if "@" in transl_msg:
-                transl_msg = transl_msg.replace("@ ", "@")
-
-        # making the emotes format themselves properly!
-            if (("<:" in transl_msg and ">" in transl_msg) or ("<a:" in transl_msg and ">" in transl_msg)):
-                sanitizer(transl_msg)
-            await message.edit(content=transl_msg)
 
 client.run(TOKEN)
