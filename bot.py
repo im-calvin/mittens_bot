@@ -25,8 +25,6 @@ async def on_ready():
     print("もしもし")
 
 dict = {}
-transl_msg = ""
-
 
 @client.event
 async def on_message(message):
@@ -44,6 +42,8 @@ async def on_message(message):
         await message.channel.send("サメです！")
 
     transl_msg = translator(message)
+    if transl_msg == "bruh what":
+        return
 
     bot_msg = await message.channel.send(transl_msg)
     dict[message.id] = bot_msg
@@ -67,10 +67,11 @@ async def on_message_edit(before, after):
     bot_msg = dict[after.id]
 
     transl_msg = translator(after)
+    if transl_msg == "bruh what":
+        return
 
     channel = after.channel  # channel object
-    # message object (from user)
-    message = await channel.fetch_message(bot_msg.id)
+    message = await channel.fetch_message(bot_msg.id) # message object (from user)
     await message.edit(content=transl_msg)
 
 
@@ -101,6 +102,7 @@ def translator(message):
             if (("<:" in transl_msg and ">" in transl_msg) or ("<a:" in transl_msg and ">" in transl_msg)):
                 sanitizer(transl_msg)
             return transl_msg
-
+    else: 
+        return "bruh what"
 
 client.run(TOKEN)
