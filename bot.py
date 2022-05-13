@@ -1,10 +1,13 @@
 # bot.py
 import os
+from socket import MsgFlag
 
 import discord
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
+from discord.ext import commands
 import re
+import asyncio
 # from jisho_api.word import Word
 # from jisho_api.kanji import Kanji
 
@@ -33,7 +36,6 @@ def sanitizer(msg):
 async def on_ready():
     print("もしもし")
 
-
 @client.event
 async def on_message(message):
     if message.author == client.user:  # base case
@@ -44,6 +46,9 @@ async def on_message(message):
         return
     if message.content.startswith("<:"):
         return
+    # for gura-chan
+    if message.content == "a":
+        await message.channel.send("サメです！")
     lang = translate_client.detect_language(message.content)["language"]
 
     if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko":
@@ -58,27 +63,31 @@ async def on_message(message):
         # making the emotes format themselves properly!
             if (("<:" in transl_msg and ">" in transl_msg) or ("<a:" in transl_msg and ">" in transl_msg)):
                 sanitizer(transl_msg)
-            await message.channel.send(transl_msg)
+            bot_msg = await message.channel.send(transl_msg)
+            global bot_id
+            bot_id = bot_msg.id
+            bot_msg
 
-    # for gura-chan
-    if message.content == "a":
-        await message.channel.send("サメです！")
 
-# @client.event
-# async def on_message_edit(before, after):
-#     lang = translate_client.detect_language(after.content)["language"]
-#     if lang == "ja" or lang == "zh" or lang == "fr" or lang == "ko":
-#         if translate_client.detect_language(after.content)["confidence"] > 0.9:
-#             transl_msg = translate_client.translate(after.content, "en", "text")[
-#                 "translatedText"]  # transl_msg = translated form of message
+@client.event
+async def on_message_edit(before, after):
+    channel = after.channel # channel object
+    message = await channel.fetch_message(bot_id) # message object (from user)
 
-#             if "@" in transl_msg:
-#                 transl_msg = transl_msg.replace("@ ", "@")
+    lang = translate_client.detect_language(after.content)["language"]
 
-#         # making the emotes format themselves properly!
-#             if (("<:" in transl_msg and ">" in transl_msg) or ("<a:" in transl_msg and ">" in transl_msg)):
-#                 sanitizer(transl_msg)
-#             await after.channel.send(transl_msg)
+    if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko":
+        # zh-TW = traditional, zh-CN = simplified
+        if translate_client.detect_language(after.content)["confidence"] > 0.95:
+            transl_msg = translate_client.translate(after.content, "en", "text")[
+                "translatedText"]  # transl_msg = translated form of message
 
+            if "@" in transl_msg:
+                transl_msg = transl_msg.replace("@ ", "@")
+
+        # making the emotes format themselves properly!
+            if (("<:" in transl_msg and ">" in transl_msg) or ("<a:" in transl_msg and ">" in transl_msg)):
+                sanitizer(transl_msg)
+            await message.edit(content=transl_msg)
 
 client.run(TOKEN)
