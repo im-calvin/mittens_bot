@@ -49,7 +49,7 @@ def filter_future(hour_list):
 
 def check_timezone():
 
-    TIMEZONE_PATH = 'text/timezone'
+    TIMEZONE_PATH = 'holo_schedule/text/timezone'
 
     with open(TIMEZONE_PATH, 'r') as f:
         timezone = f.read().replace('\n', '')
@@ -104,7 +104,7 @@ def fetch_title(url_list):
 
 def get_en_list():
 
-    EN_FILE_PATH = 'text/hololive_members_en.txt'
+    EN_FILE_PATH = 'holo_schedule/text/hololive_members_en.txt'
 
     en_list = []
 
@@ -124,7 +124,7 @@ def get_en_list():
 
 def get_all_members_list():
 
-    MEMBER_FILE_PATH = 'text/hololive_members.txt'
+    MEMBER_FILE_PATH = 'holo_schedule/text/hololive_members.txt'
     all_members_list = []
 
     with open(MEMBER_FILE_PATH, 'rb') as f:
@@ -164,7 +164,7 @@ def get_date_delta(timezone):
 
 def get_hololive_members():
 
-    MEMBER_FILE_PATH = 'text/hololive_members.txt'
+    MEMBER_FILE_PATH = 'holo_schedule/text/hololive_members.txt'
 
     with open(MEMBER_FILE_PATH, 'rb') as f:
         hololive_members_list = f.readlines()[1].decode("utf-8").split(',')

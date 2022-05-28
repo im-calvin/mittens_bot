@@ -2,7 +2,7 @@
 import re
 import time
 
-from src.util import *
+from holo_schedule.src.util import *
 
 import requests
 

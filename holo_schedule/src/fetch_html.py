@@ -2,8 +2,7 @@
 
 import sys
 
-from src.util import *
-# import util 
+from holo_schedule.src.util import *
 
 import requests
 

@@ -5,16 +5,16 @@ import unicodedata
 import argparse
 import json
 
-from src.fetch_html import *
-from src.scraping import *
-from src.util import *
+from holo_schedule.src.fetch_html import *
+from holo_schedule.src.scraping import *
+from holo_schedule.src.util import *
 
 LABELS = ("Yesterday", "Today", "Tomorrow", "The day after tomorrow")
-holo_list = [] * 100
 
 
 def main(args):
 
+    holo_list = []
     if args.date:
         show_date()
         sys.exit(0)
@@ -132,55 +132,3 @@ def main(args):
             print('{:2d}   {}~    {}{}{}'.format(
                 i+1, time_list[i], members_list[i], m_space, url_list[i]))
     holo_list = []
-
-
-if __name__ == '__main__':
-
-    move_current_directory()
-
-    parser = argparse.ArgumentParser(
-        description="Hololive schedule scraping tool",
-        formatter_class=argparse.RawTextHelpFormatter,
-        epilog="""Notes: You cannot use --date with other options.
-       But it is available to use the other options at the same time.
-
-LICENSE: GNU General Public License v3.0
-
-Github: https://github.com/TeepaBlue/holo-schedule-CLI""",
-    )
-    parser.add_argument(
-        "--eng",
-        action="store_true",
-        default=False,
-        help="Make displayed hololive member's name English",
-    )
-    parser.add_argument(
-        "--date", action="store_true", default=False, help="Get the current time in JST"
-    )
-    parser.add_argument(
-        "--tomorrow",
-        action="store_true",
-        default=False,
-        help="Show tomorrow's schedule list",
-    )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        default=False,
-        help="Show all available live streaming schedule including holostars, etc.",
-    )
-    parser.add_argument(
-        "--title",
-        action="store_true",
-        default=False,
-        help="Show schedule with the titles of the streams",
-    )
-    parser.add_argument(
-        "--future",
-        action="store_true",
-        default=False,
-        help="Only show streams starting in the future",
-    )
-    args = parser.parse_args()
-
-    main(args)
