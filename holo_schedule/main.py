@@ -1,4 +1,5 @@
 # Fetch the schedule of hololive live stream
+# creds: https://github.com/TBNV999/holo-schedule-CLI
 
 import sys
 import unicodedata
@@ -61,8 +62,6 @@ def main(args):
     if args.eng:
         members_list = convert_into_en_list(members_list)
 
-    print('     Time      Member            Streaming URL          ({})'.format(timezone))
-
     for i, (time, member, url) in enumerate(zip(time_list, members_list, url_list)):
         if not filter_map[i]:
             continue
@@ -89,8 +88,6 @@ def main(args):
 
             # updating json file:
             try:
-                print('{:2d}   {}~    {}{}{}  {}'.format(
-                    i+1, time, member, m_space, url, title_list[i]))
 
                 holo_list.append({
                     "time": time,
@@ -100,18 +97,24 @@ def main(args):
                 }
                 )
 
-                with open('holo_schedule.json', "w") as f:
-                    # replace the old json file every 15m -- write only!
-                    # exports json file
-                    json.dump(holo_list, f, indent=4)
+                if not args.tomorrow:
+                    with open('holo_schedule.json', "w") as f:
+                        # replace the old json file every 15m -- write only!
+                        # exports json file
+                        json.dump(holo_list, f, indent=4)
 
-                    f.close()
+                        f.close()
+                elif args.tomorrow:
+                    with open('holo_schedule.json', 'a') as f:
+                        # overwrite the old json file every 15m -- write only!
+                        # exports json file
+                        json.dump(holo_list, f, indent=4)
+
+                        f.close()
 
             # Some emoji cause this error
             except UnicodeEncodeError:
                 title_list[i] = remove_emoji(title_list[i])
-                print('{:2d}   {}~    {}{}{}  {}'.format(
-                    i+1, time, member, m_space, url, title_list[i]))
 
                 holo_list.append({
                     "time": time,
@@ -121,14 +124,20 @@ def main(args):
                 }
                 )
 
-                with open('holo_schedule.json', "w") as f:
-                    # replace the old json file every 15m -- write only!
-                    # exports json file
-                    json.dump(holo_list, f, indent=4)
+                if not args.tomorrow:
+                    with open('holo_schedule.json', "w") as f:
+                        # replace the old json file every 15m -- write only!
+                        # exports json file
+                        json.dump(holo_list, f, indent=4)
 
-                    f.close()
+                        f.close()
+                elif args.tomorrow:
+                    with open('holo_schedule.json', 'a') as f:
+                        # overwrite the old json file every 15m -- write only!
+                        # exports json file
+                        json.dump(holo_list, f, indent=4)
 
-        else:
-            print('{:2d}   {}~    {}{}{}'.format(
-                i+1, time_list[i], members_list[i], m_space, url_list[i]))
+                        f.close()
+                
     holo_list = []
+    print('holo_schedule.json updated!')

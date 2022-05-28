@@ -88,7 +88,10 @@ async def on_message_edit(before, after):
 
 @tasks.loop(seconds=15*60)
 async def get_holo_schedule():
-    print('bruh what')
+    # args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
+    # main.main(args)
+    args = argparser.parse_args(
+        ["--tomorrow", "--eng", "--all", "--title", "--future"])
     main.main(args)
 
 # exceptions for on_message
@@ -190,7 +193,7 @@ argparser.add_argument(
 )
 argparser.add_argument(
     "--date", action="store_true", default=False
-)   
+)
 argparser.add_argument(
     "--tomorrow", action="store_true", default=False
 )
@@ -203,7 +206,7 @@ argparser.add_argument(
 argparser.add_argument(
     "--future", action="store_true", default=False
 )
-args = argparser.parse_args(["--eng", "--all", "--title"])
+
 
 MEMBER_LIST_STR = ("**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rose, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimatsi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha \n" +
                    "**Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio \n" +
