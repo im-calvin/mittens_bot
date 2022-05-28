@@ -131,6 +131,7 @@ def main(args):
         else:
             print('{:2d}   {}~    {}{}{}'.format(
                 i+1, time_list[i], members_list[i], m_space, url_list[i]))
+    holo_list = []
 
 
 if __name__ == '__main__':

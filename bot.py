@@ -13,6 +13,16 @@ import sys
 import time
 import asyncio
 
+import sys
+import unicodedata
+import argparse
+import json
+
+from src.fetch_html import *
+from src.scraping import *
+from src.util import *
+
+
 # import re
 
 # from jisho_api.word import Word
@@ -133,7 +143,8 @@ async def on_message_edit(before, after):
 @tasks.loop(seconds=3)
 async def get_holo_schedule():
     print('bruh what')
-    scraper.main(args)
+    # scraper.main(args)
+    main(args)
 get_holo_schedule.start()
 
 
@@ -220,6 +231,130 @@ async def addchannel(message):
 
         except IndexError:  # if the vtuber_channel is empty
             await message.channel.send("Please choose a channel to add. You may choose from: \n" + member_list_str)
+
+LABELS = ("Yesterday", "Today", "Tomorrow", "The day after tomorrow")
+holo_list = [] * 100
+
+
+def main(args):
+
+    if args.date:
+        show_date()
+        sys.exit(0)
+
+    timezone = check_timezone()
+
+    # Fetch html file from https://schedule.hololive.tv/simple
+    source_html = fetch_source_html(args.tomorrow)
+    time_list, members_list, url_list = scraping(source_html, args.all)
+
+    if args.future and not args.tomorrow:
+        hour_list = list(map(lambda x: int(x.split(':')[0]), time_list))
+        filter_map = filter_future(hour_list)
+    else:
+        filter_map = [True] * len(time_list)
+
+    if timezone != 'Asia/Tokyo':
+        time_list = timezone_convert(time_list, timezone)
+        date_delta = get_date_delta(timezone)
+    else:
+        date_delta = 0
+
+    if args.tomorrow:
+        date_delta += 1
+
+    # All three lists have the same length
+    lists_length = len(time_list)
+
+    members_list = list(map(replace_name, members_list))
+    hour_list = list(map(lambda x: int(x.split(':')[0]), time_list))
+
+    # Check if date is shifted
+    if hour_list != sorted(hour_list):
+        shift_index = check_shift(hour_list)
+    else:
+        shift_index = None
+
+    title_list = []
+
+    if args.title:
+        title_list = fetch_title(url_list)
+
+    # Convert member's name into English
+    if args.eng:
+        members_list = convert_into_en_list(members_list)
+
+    print('     Time      Member            Streaming URL          ({})'.format(timezone))
+
+    for i, (time, member, url) in enumerate(zip(time_list, members_list, url_list)):
+        if not filter_map[i]:
+            continue
+
+        # # this is only for time zone differences! -- I should implement time zones in my own code.
+        if shift_index:
+            if shift_index[0] == i - 1:
+                print('\n' + LABELS[1+date_delta] + '\n')
+
+            if shift_index[1] == i - 1:
+                print('\n' + LABELS[2+date_delta] + '\n')
+
+        # Check character type of member name
+        # Contain Japanese
+        if unicodedata.east_asian_width(members_list[i][0]) == 'W':
+            m_space = ' ' * ((-2 * len(members_list[i]) + 18))
+
+        else:
+            m_space = ' ' * ((-1 * len(members_list[i])) + 18)
+
+        # With titles of streams
+        if args.title:
+            # always going to have args.title in json
+
+            # updating json file:
+            try:
+                print('{:2d}   {}~    {}{}{}  {}'.format(
+                    i+1, time, member, m_space, url, title_list[i]))
+
+                holo_list.append({
+                    "time": time,
+                    "member": member,
+                    "url": url,
+                    "title": title_list[i]
+                }
+                )
+
+                with open('holo_schedule.json', "w") as f:
+                    # replace the old json file every 15m -- write only!
+                    # exports json file
+                    json.dump(holo_list, f, indent=4)
+
+                    f.close()
+
+            # Some emoji cause this error
+            except UnicodeEncodeError:
+                title_list[i] = remove_emoji(title_list[i])
+                print('{:2d}   {}~    {}{}{}  {}'.format(
+                    i+1, time, member, m_space, url, title_list[i]))
+
+                holo_list.append({
+                    "time": time,
+                    "member": member,
+                    "url": url,
+                    "title": title_list[i]
+                }
+                )
+
+                with open('holo_schedule.json', "w") as f:
+                    # replace the old json file every 15m -- write only!
+                    # exports json file
+                    json.dump(holo_list, f, indent=4)
+
+                    f.close()
+
+        else:
+            print('{:2d}   {}~    {}{}{}'.format(
+                i+1, time_list[i], members_list[i], m_space, url_list[i]))
+    holo_list = []
 
 
 member_list_str = ("**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rose, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimatsi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha \n" +
