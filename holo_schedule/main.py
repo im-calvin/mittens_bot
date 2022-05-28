@@ -40,6 +40,9 @@ def main(args):
 
     if args.tomorrow:
         date_delta += 1
+        with open('holo_schedule.json', 'r') as g:  # get the schedule WITHOUT 'tomorrow'
+            holo_list = json.load(g)
+            print(holo_list)
 
     # All three lists have the same length
     lists_length = len(time_list)
@@ -86,15 +89,15 @@ def main(args):
         if args.title and not args.tomorrow:
             # always going to have args.title in json
             # updating json file:
+            holo_list.append({
+                "time": time,
+                "member": member,
+                "url": url,
+                "title": title_list[i],
+                "date": "today"
+            }
+            )
             try:
-                holo_list.append({
-                    "time": time,
-                    "member": member,
-                    "url": url,
-                    "title": title_list[i],
-                    "date": "today"
-                }
-                )
                 with open('holo_schedule.json', "w") as f:
                     # replace the old json file every 15m -- write only!
                     # exports json file
@@ -105,14 +108,6 @@ def main(args):
             except UnicodeEncodeError:
                 title_list[i] = remove_emoji(title_list[i])
 
-                holo_list.append({
-                    "time": time,
-                    "member": member,
-                    "url": url,
-                    "title": title_list[i],
-                    "date": "today"
-                }
-                )
                 with open('holo_schedule.json', "w") as f:
                     # replace the old json file every 15m -- write only!
                     # exports json file
@@ -120,17 +115,20 @@ def main(args):
 
                     f.close()
 
-        elif args.title and args.tomorrow:
+        else:  # if args.tomorrow
+
+            holo_list.append({
+                "time": time,
+                "member": member,
+                "url": url,
+                "title": title_list[i],
+                "date": "tomorrow"
+            }
+            )
+
             try:
-                holo_list.append({
-                    "time": time,
-                    "member": member,
-                    "url": url,
-                    "title": title_list[i],
-                    "date": "tomorrow"
-                }
-                )
-                with open('holo_schedule.json', "a") as f:
+
+                with open('holo_schedule.json', "w") as f:
                     # replace the old json file every 15m -- write only!
                     # exports json file
                     json.dump(holo_list, f, indent=4)
@@ -140,15 +138,7 @@ def main(args):
             except UnicodeEncodeError:
                 title_list[i] = remove_emoji(title_list[i])
 
-                holo_list.append({
-                    "time": time,
-                    "member": member,
-                    "url": url,
-                    "title": title_list[i],
-                    "date": "today"
-                }
-                )
-                with open('holo_schedule.json', "a") as f:
+                with open('holo_schedule.json', "w") as f:
                     # replace the old json file every 15m -- write only!
                     # exports json file
                     json.dump(holo_list, f, indent=4)

@@ -88,8 +88,8 @@ async def on_message_edit(before, after):
 
 @tasks.loop(seconds=15*60)
 async def get_holo_schedule():
-    # args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
-    # main.main(args)
+    args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
+    main.main(args)
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     main.main(args)
