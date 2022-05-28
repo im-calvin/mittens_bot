@@ -86,7 +86,7 @@ async def on_message_edit(before, after):
 # runs the scraper for holo-schedule
 
 
-@tasks.loop(seconds=5)
+@tasks.loop(seconds=15*60)
 async def get_holo_schedule():
     print('bruh what')
     main.main(args)
