@@ -184,17 +184,19 @@ async def addchannel(message, msg):
             }
             user_info_copy = user_info.copy()
             user_list = profiles[vtuber_channel]
-            # for i in range(len(user_list)):
-            #     # check if User-id is already in
-            #     if user_id in user_list[i].values():
-            #         await message.channel.send("I appreciate your enthusiasm but you can't follow " + vtuber_channel + " twice. \nTry making another account?")
-            #     else:
-            user_list.append(user_info_copy)  # list of user-info
-            profiles[vtuber_channel] = user_list
-            json.dump(profiles, g, indent=4)
-            await message.channel.send("Added " + vtuber_channel + " to your profile")
+            list_of_all_values = [
+                value for elem in user_list for value in elem.values()]
+            # check if User-id is already in
+            if user_id in list_of_all_values:
+                json.dump(profiles, g, indent=4)
+                await message.channel.send("I appreciate your enthusiasm but you can't follow " + vtuber_channel + " twice. \nTry making another account?")
+            else:
+                user_list.append(user_info_copy)  # list of user-info
+                profiles[vtuber_channel] = user_list
+                json.dump(profiles, g, indent=4)
+                await message.channel.send("Added " + vtuber_channel + " to your profile")
     else:
-        await message.channel.send("Please choose a channel to add. You may choose from: \n" + MEMBER_LIST_STR)
+        await message.channel.send("Please choose a channel. You may choose from: \n" + MEMBER_LIST_STR)
 
 
 async def removechannel(message, msg):
@@ -205,13 +207,27 @@ async def removechannel(message, msg):
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
         with open('profiles.json', 'w') as g:
-            updated_user_info = {k: v for k,
-                                 v in profiles.items() if not v == user_id}
-            profiles[vtuber_channel] = updated_user_info
-            json.dump(profiles, g, indent=4)
-        await message.channel.send("Added " + vtuber_channel + " to your profile")
+            user_list = profiles[vtuber_channel]
+            user_index = next((index for (index, d) in enumerate(
+                user_list) if d["user_id"] == user_id), None)
+            list_of_all_values = [
+                value for elem in user_list for value in elem.values()]
+            if user_id in list_of_all_values:
+                del user_list[user_index]
+                profiles[vtuber_channel] = user_list
+                json.dump(profiles, g, indent=4)
+                await message.channel.send("Removed " + vtuber_channel + " from your profile")
+            else:
+                json.dump(profiles, g, indent=4)
+                await message.channel.send("Unable to remove " + vtuber_channel + " from your profile")
     else:
         await message.channel.send("Channel not found.")
+
+
+# @tasks.loop
+# async def ping(message):
+#     with open('holo_schedule.json', 'r') as f:
+#         profiles[]
 
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
