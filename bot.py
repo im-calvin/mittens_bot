@@ -40,6 +40,7 @@ async def on_ready():
 
 message_dict = {}
 profiles = {}
+user_list = []
 
 
 @client.event
@@ -51,7 +52,12 @@ async def on_message(message):
 
     # profiles
     if message.content[0] == PREFIX:
-        await addchannel(message)
+        msg = message.content[1:].split(' ')
+        command = msg[0]
+        if command == "addchannel":
+            await addchannel(message, msg)
+        if command == "removechannel":
+            await removechannel(message, msg)
 
     # translate
     transl_msg = translator(message)
@@ -105,6 +111,8 @@ async def exceptions(message):
     # for gura-chan
     if message.content == "a":
         await message.channel.send("サメです！")
+    if 'dying' in message.content or 'ded' in message.content or 'dead' in message.content:
+        await message.add_reaction('<:respawner:972568754049384478>')
     if message.content == "":  # if msg is empty (ie: image)
         return "bruh what"
     return
@@ -161,28 +169,49 @@ def translator(message):
         return "bruh what"
 
 
-async def addchannel(message):
-    msg = message.content[1:].split(' ')
-    command = msg[0]
+# message = message obj, msg = whole msg str, command = msg[1:]
+async def addchannel(message, msg):
     user_id = message.author.id
-    if command == "addchannel":
-        # name of vtuber channel
-        try:
-            # name of the channel to subscribe to
-            vtuber_channel = ' '.join(msg[1:]).strip()
-            if vtuber_channel in all_members_list:  # vtuber ch is matched
-                profiles[user_id] = {}
-                profiles[user_id][vtuber_channel] = 'Subscribed'
-                with open('profiles.json', 'w') as f:
-                    json.dump(profiles, f, indent=4)
-                    f.close()
-                await message.channel.send("Added " + vtuber_channel + " to your profile")
-            elif vtuber_channel == "":
-                await message.channel.send("Please choose a channel to add. You may choose from: \n" + MEMBER_LIST_STR)
-            print(vtuber_channel)
+    channel_id = message.channel.id
+    vtuber_channel = ' '.join(msg[1:]).strip()  # name of vtuber channel
+    if vtuber_channel in all_members_list:  # vtuber ch is matched
+        with open('profiles.json', 'r') as f:
+            profiles = json.load(f)
+        with open('profiles.json', 'w') as g:
+            user_info = {  # dict
+                "channel_id": channel_id,
+                "user_id": user_id
+            }
+            user_info_copy = user_info.copy()
+            user_list = profiles[vtuber_channel]
+            # for i in range(len(user_list)):
+            #     # check if User-id is already in
+            #     if user_id in user_list[i].values():
+            #         await message.channel.send("I appreciate your enthusiasm but you can't follow " + vtuber_channel + " twice. \nTry making another account?")
+            #     else:
+            user_list.append(user_info_copy)  # list of user-info
+            profiles[vtuber_channel] = user_list
+            json.dump(profiles, g, indent=4)
+            await message.channel.send("Added " + vtuber_channel + " to your profile")
+    else:
+        await message.channel.send("Please choose a channel to add. You may choose from: \n" + MEMBER_LIST_STR)
 
-        except IndexError:  # if the vtuber_channel is empty
-            await message.channel.send("Please choose a channel to add. You may choose from: \n" + MEMBER_LIST_STR)
+
+async def removechannel(message, msg):
+    user_id = message.author.id
+    channel_id = message.channel.id
+    vtuber_channel = ' '.join(msg[1:]).strip()  # name of vtuber channel
+    if vtuber_channel in all_members_list:
+        with open('profiles.json', 'r') as f:
+            profiles = json.load(f)
+        with open('profiles.json', 'w') as g:
+            updated_user_info = {k: v for k,
+                                 v in profiles.items() if not v == user_id}
+            profiles[vtuber_channel] = updated_user_info
+            json.dump(profiles, g, indent=4)
+        await message.channel.send("Added " + vtuber_channel + " to your profile")
+    else:
+        await message.channel.send("Channel not found.")
 
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI

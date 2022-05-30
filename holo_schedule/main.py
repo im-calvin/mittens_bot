@@ -23,7 +23,11 @@ def main(args):
     timezone = check_timezone()
 
     # Fetch html file from https://schedule.hololive.tv/simple
-    source_html = fetch_source_html(args.tomorrow)
+    try:  # if no streams tmr
+        source_html = fetch_source_html(args.tomorrow)
+    except SystemExit:
+        print('no streams scheduled for tomorrow')
+        return
     time_list, members_list, url_list = scraping(source_html, args.all)
 
     if args.future and not args.tomorrow:
@@ -42,7 +46,6 @@ def main(args):
         date_delta += 1
         with open('holo_schedule.json', 'r') as g:  # get the schedule WITHOUT 'tomorrow'
             holo_list = json.load(g)
-            print(holo_list)
 
     # All three lists have the same length
     lists_length = len(time_list)
