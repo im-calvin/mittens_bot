@@ -1,13 +1,18 @@
 # bot.py
+from array import typecodes
 import os
 import discord
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
 import json
+
+from platformdirs import user_log_dir
 from holo_schedule import main
 from discord.ext import commands, tasks
 import argparse
 import json
+
+import holo_schedule
 
 # from jisho_api.word import Word
 # from jisho_api.kanji import Kanji
@@ -18,8 +23,13 @@ GUILD = os.getenv('DISCORD_GUILD')
 TRANSLATE = os.getenv('TRANSLATE_TOKEN')
 
 client = discord.Client()
+intents = discord.Intents.none()
+intents.reactions = True
+intents.members = True
+intents.guilds = True
 translate_client = translate.Client.from_service_account_json(
     'googleapi.json')
+
 
 all_members_list = []
 PREFIX = "$"
@@ -58,6 +68,13 @@ async def on_message(message):
             await addchannel(message, msg)
         if command == "removechannel":
             await removechannel(message, msg)
+        # id = 445609667431759874
+        # await client.get_channel(445609667431759874).send('hardcoded')
+        # await client.get_channel(id).send('var')
+        # print(type(command))
+        # command = int(command)
+        # print(type(command))
+        # await client.get_channel(int(command)).send('test')
 
     # translate
     transl_msg = translator(message)
@@ -224,10 +241,36 @@ async def removechannel(message, msg):
         await message.channel.send("Channel not found.")
 
 
-# @tasks.loop
-# async def ping(message):
-#     with open('holo_schedule.json', 'r') as f:
-#         profiles[]
+@tasks.loop(seconds=60)
+async def ping():
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    with open('profiles.json', 'r') as g:
+        profiles = json.load(g)
+        # list of dicts containing channel_id, user_id
+        for i in range(len(holo_schedule)):  # iterate through holo_schedule
+            vtuber_channel = holo_schedule[i].get("member")
+            print(vtuber_channel)
+            try:
+                user_list = profiles.get(vtuber_channel)
+                if holo_schedule[i].get("mentioned") == False:
+                    # set 'mentioned' to true
+                    holo_schedule[i]["mentioned"] = True
+                    print('updated')
+                    with open('holo_schedule.json', 'w') as h:
+                        json.dump(holo_schedule, h, indent=4)
+                    for j in range(len(user_list)):  # iterate through user_list
+                        user_id = user_list[j].get("user_id")
+                        channel_id = int(
+                            user_list[j].get("channel_id"))
+                        print(channel_id)
+                        channel = client.get_channel(
+                            channel_id)  # channel obj
+                        await channel.send(vtuber_channel + " is going to stream!")
+                        await channel.send("<@" + user_id + ">")
+            # typeerror from user_list empty // if holostar/hololive?
+            except TypeError:
+                print('no people to ping')
 
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
@@ -259,4 +302,5 @@ MEMBER_LIST_STR = ("**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Sh
                    "**HoloEN:** Calli, Kiara, Ina, Gura, Amelia, IRyS, Sana, Fauna, Kronii, Mumei, Baelz")
 
 get_holo_schedule.start()
+ping.start()
 client.run(TOKEN)

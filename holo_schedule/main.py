@@ -73,12 +73,12 @@ def main(args):
             continue
 
         # # this is only for time zone differences! -- I should implement time zones in my own code.
-        if shift_index:
-            if shift_index[0] == i - 1:
-                print('\n' + LABELS[1+date_delta] + '\n')
+        # if shift_index:
+        #     if shift_index[0] == i - 1:
+        #         print('\n' + LABELS[1+date_delta] + '\n')
 
-            if shift_index[1] == i - 1:
-                print('\n' + LABELS[2+date_delta] + '\n')
+        #     if shift_index[1] == i - 1:
+        #         print('\n' + LABELS[2+date_delta] + '\n')
 
         # Check character type of member name
         # Contain Japanese
@@ -97,7 +97,8 @@ def main(args):
                 "member": member,
                 "url": url,
                 "title": title_list[i],
-                "date": "today"
+                "date": "today",
+                "mentioned": False
             }
             )
             try:
@@ -125,7 +126,8 @@ def main(args):
                 "member": member,
                 "url": url,
                 "title": title_list[i],
-                "date": "tomorrow"
+                "date": "tomorrow",
+                "mentioned": False
             }
             )
 
