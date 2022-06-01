@@ -12,7 +12,9 @@ from discord.ext import commands, tasks
 import argparse
 import json
 
-import holo_schedule
+from datetime import datetime, timedelta, time
+from time import mktime
+from pytz import timezone
 
 # from jisho_api.word import Word
 # from jisho_api.kanji import Kanji
@@ -23,10 +25,7 @@ GUILD = os.getenv('DISCORD_GUILD')
 TRANSLATE = os.getenv('TRANSLATE_TOKEN')
 
 client = discord.Client()
-intents = discord.Intents.none()
-intents.reactions = True
-intents.members = True
-intents.guilds = True
+intents = discord.Intents.all()
 translate_client = translate.Client.from_service_account_json(
     'googleapi.json')
 
@@ -37,8 +36,8 @@ PREFIX = "$"
 
 @client.event
 async def on_ready():
-    print("もしもし")
-
+    get_holo_schedule.start()
+    ping.start()
     with open('holo_members.txt', 'rb') as f:
         file_content = f.readlines()[1:]  # Ignore first row
         for member_block in file_content:
@@ -47,6 +46,8 @@ async def on_ready():
         # Delete break symbol
         all_members_list[-1] = all_members_list[-1].replace('\n', '')
         f.close()
+    print("もしもし")
+
 
 message_dict = {}
 profiles = {}
@@ -68,13 +69,8 @@ async def on_message(message):
             await addchannel(message, msg)
         if command == "removechannel":
             await removechannel(message, msg)
-        # id = 445609667431759874
-        # await client.get_channel(445609667431759874).send('hardcoded')
-        # await client.get_channel(id).send('var')
-        # print(type(command))
-        # command = int(command)
-        # print(type(command))
-        # await client.get_channel(int(command)).send('test')
+        if command == "schedule":
+            await schedule(message, msg)
 
     # translate
     transl_msg = translator(message)
@@ -105,17 +101,6 @@ async def on_message_edit(before, after):
     # message object (from user)
     message = await channel.fetch_message(bot_msg.id)
     await message.edit(content=transl_msg)
-
-# runs the scraper for holo-schedule
-
-
-@tasks.loop(seconds=15*60)
-async def get_holo_schedule():
-    args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
-    main.main(args)
-    args = argparser.parse_args(
-        ["--tomorrow", "--eng", "--all", "--title", "--future"])
-    main.main(args)
 
 # exceptions for on_message
 
@@ -204,7 +189,7 @@ async def addchannel(message, msg):
             list_of_all_values = [
                 value for elem in user_list for value in elem.values()]
             # check if User-id is already in
-            if user_id in list_of_all_values:
+            if user_id in list_of_all_values and channel_id in list_of_all_values:
                 json.dump(profiles, g, indent=4)
                 await message.channel.send("I appreciate your enthusiasm but you can't follow " + vtuber_channel + " twice. \nTry making another account?")
             else:
@@ -240,8 +225,21 @@ async def removechannel(message, msg):
     else:
         await message.channel.send("Channel not found.")
 
+# runs the scraper for holo-schedule
 
-@tasks.loop(seconds=60)
+
+@tasks.loop(seconds=15*60)
+async def get_holo_schedule():
+    args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
+    main.main(args)
+    args = argparser.parse_args(
+        ["--tomorrow", "--eng", "--all", "--title", "--future"])
+    main.main(args)
+
+# pings user on a rolling basis whenever new holo_schedule comes out
+
+
+@tasks.loop(seconds=15*60)
 async def ping():
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
@@ -250,28 +248,64 @@ async def ping():
         # list of dicts containing channel_id, user_id
         for i in range(len(holo_schedule)):  # iterate through holo_schedule
             vtuber_channel = holo_schedule[i].get("member")
-            print(vtuber_channel)
-            try:
-                user_list = profiles.get(vtuber_channel)
-                if holo_schedule[i].get("mentioned") == False:
-                    # set 'mentioned' to true
-                    holo_schedule[i]["mentioned"] = True
-                    print('updated')
-                    with open('holo_schedule.json', 'w') as h:
-                        json.dump(holo_schedule, h, indent=4)
-                    for j in range(len(user_list)):  # iterate through user_list
-                        user_id = user_list[j].get("user_id")
-                        channel_id = int(
-                            user_list[j].get("channel_id"))
-                        print(channel_id)
-                        channel = client.get_channel(
-                            channel_id)  # channel obj
-                        await channel.send(vtuber_channel + " is going to stream!")
-                        await channel.send("<@" + user_id + ">")
-            # typeerror from user_list empty // if holostar/hololive?
-            except TypeError:
-                print('no people to ping')
+            user_list = profiles.get(vtuber_channel)
+            if holo_schedule[i].get("mentioned") == False:
+                # set 'mentioned' to true
+                holo_schedule[i]["mentioned"] = True
+                with open('holo_schedule.json', 'w') as h:
+                    json.dump(holo_schedule, h, indent=4)
+                for j in range(len(user_list)):  # iterate through user_list
+                    user_id = user_list[j].get("user_id")
+                    channel_id = int(
+                        user_list[j].get("channel_id"))
+                    channel = client.get_channel(id=channel_id)  # channel obj
 
+                    # message send
+
+                    holo_time = holo_schedule[i].get("time").split(':')
+                    holo_date = holo_schedule[i].get("date")
+                    unix_time = time_convert(holo_time, holo_date)
+
+                    time_str = "<t:" + str(unix_time) + ">! \n"
+                    header_str = vtuber_channel + " scheduled a stream at "
+                    mention_str = "<@" + str(user_id) + ">\n"
+                    title_str = holo_schedule[i].get("title")
+                    url = holo_schedule[i].get("url")
+                    await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
+
+# converts from jp to unix time
+
+
+def time_convert(holo_time, holo_date):  # takes an array in 'xx:xx' format
+    tz = timezone("Asia/Tokyo")
+    now = datetime.now(tz)
+    if holo_date == "tomorrow":
+        japan_date = now + timedelta(days=1)
+    else:
+        japan_date = now.date()
+    japan_time = time(int(holo_time[0]), int(holo_time[1]))
+    japan_dt = tz.localize(
+        datetime.combine(japan_date, japan_time))
+    unix_time = int(japan_dt.timestamp())
+    return unix_time  # returns time in unix format
+
+
+# gets holo_schedule discord-ready
+async def schedule(message, msg):
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    embedVar = discord.Embed(title="Schedule", color=0xfcc174)
+    for i in range(len(holo_schedule)):
+        holo_time = holo_schedule[i].get("time").split(':')
+        holo_date = holo_schedule[i].get("date")
+        unix_time = time_convert(holo_time, holo_date)
+        time_str = "<t:" + str(unix_time) + ">"
+        member_str = holo_schedule[i].get("member") + " "
+        title_str = holo_schedule[i].get("title")
+        url = holo_schedule[i].get("url")
+        embedVar.add_field(name='{}~ **{}:**'.format(
+            time_str, member_str), value='{} \n {}'.format(title_str, url), inline=False)
+    await message.channel.send(embed=embedVar)
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
 argparser = argparse.ArgumentParser(
@@ -301,6 +335,5 @@ MEMBER_LIST_STR = ("**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Sh
                    "**HoloID:** Risu, Moona, Iofi, Ollie, Anya, Reine, Zeta, Kaela, Kobo \n" +
                    "**HoloEN:** Calli, Kiara, Ina, Gura, Amelia, IRyS, Sana, Fauna, Kronii, Mumei, Baelz")
 
-get_holo_schedule.start()
-ping.start()
+
 client.run(TOKEN)

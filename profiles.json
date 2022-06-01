@@ -17,12 +17,7 @@
   "Murasaki Shion": [],
   "Oozora Subaru": [],
   "Ookami Mio": [],
-  "Nekomata Okayu": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    }
-  ],
+  "Nekomata Okayu": [],
   "Inugami Korone": [],
   "Shiranui Flare": [],
   "Shirogane Noel": [],
@@ -75,10 +70,5 @@
   "Kronii": [],
   "Mumei": [],
   "Baelz": [],
-  "Gura": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    }
-  ]
+  "Gura": []
 }
