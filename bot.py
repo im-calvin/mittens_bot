@@ -200,6 +200,14 @@ async def addchannel(message, msg):
     else:
         await message.channel.send("Please choose a channel. You may choose from: \n" + MEMBER_LIST_STR)
 
+# async def list(message, msg):
+#     with open('profiles.json', 'r') as f:
+#         profiles = json.load(f)
+#     user_id = message.author.id
+#     vtuber_channel = ' '.join(msg[1:]).strip()
+#     user_list = profiles[vtuber_channel]
+#     await message.channel.send(vtuber_list)
+
 
 async def removechannel(message, msg):
     user_id = message.author.id
