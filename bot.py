@@ -224,7 +224,7 @@ async def addchannel(message, msg):
 async def removechannel(message, msg):
     user_id = message.author.id
     vtuber_channel = ' '.join(msg[1:]).strip()  # name of vtuber channel
-    if vtuber_channel.lower() in all_members_list.lower():
+    if vtuber_channel in all_members_list:
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
         with open('profiles.json', 'w') as g:
