@@ -38,7 +38,8 @@ PREFIX = "$"
 @client.event
 async def on_ready():
     get_holo_schedule.start()
-    ping.start()
+    new_schedule.start()
+    now_streaming.start()
     with open('holo_members.txt', 'rb') as f:
         file_content = f.readlines()[1:]  # Ignore first row
         for member_block in file_content:
@@ -73,14 +74,19 @@ async def on_message(message):
         command = msg[0]
         if command == "help":
             await message.channel.send('add, remove, schedule, members')
+            return
         if command == "add":
             await addchannel(message, msg)
+            return
         if command == "remove":
             await removechannel(message, msg)
+            return
         if command == "schedule":
             await schedule(message)
+            return
         if command == "members":
             await message.channel.send(MEMBER_LIST_STR)
+            return
 
     # translate
     transl_msg = translator(message)
@@ -260,7 +266,7 @@ async def get_holo_schedule():
 
 
 @tasks.loop(seconds=15*60)
-async def ping():
+async def new_schedule():
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     with open('profiles.json', 'r') as g:
@@ -317,7 +323,7 @@ async def now_streaming():
             holo_date = holo_schedule[i].get("date")
             # unix time for each schedule
             unix_time = time_convert(holo_time, holo_date)
-            if unix_time - 70 < now_time:  # if the time is very close, then the scheduled time - 80 seconds should be less than now_time
+            if unix_time - 70 < now_time:  # if the time is very close, then the scheduled time - 70 seconds should be less than now_time
                 # time_str = "<t:" + str(unix_time) + ">! \n"
                 header_str = vtuber_channel + " is now live! "
                 mention_str = "<@" + str(user_id) + ">\n"
