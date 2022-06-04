@@ -31,6 +31,7 @@ translate_client = translate.Client.from_service_account_json(
 
 
 all_members_list = []
+lower_member_list = []
 PREFIX = "$"
 
 
@@ -45,6 +46,11 @@ async def on_ready():
                 member_block.decode("utf-8").split(','))
         # Delete break symbol
         all_members_list[-1] = all_members_list[-1].replace('\n', '')
+        for i in range(len(all_members_list)):
+            all_members_list[i] = all_members_list[i].replace('\n', '')
+            all_members_list[i] = all_members_list[i].replace('\r', '')
+            all_members_list[i] = all_members_list[i].replace('*', '')
+            all_members_list[i] = all_members_list[i].replace(':', '')
         f.close()
     print("もしもし")
 
@@ -65,12 +71,16 @@ async def on_message(message):
     if message.content[0] == PREFIX:
         msg = message.content[1:].split(' ')
         command = msg[0]
-        if command == "addchannel":
+        if command == "help":
+            await message.channel.send('add, remove, schedule, members')
+        if command == "add":
             await addchannel(message, msg)
-        if command == "removechannel":
+        if command == "remove":
             await removechannel(message, msg)
         if command == "schedule":
-            await schedule(message, msg)
+            await schedule(message)
+        if command == "members":
+            await message.channel.send(MEMBER_LIST_STR)
 
     # translate
     transl_msg = translator(message)
@@ -172,11 +182,18 @@ def translator(message):
 
 
 # message = message obj, msg = whole msg str, command = msg[1:]
+
+
 async def addchannel(message, msg):
     user_id = message.author.id
     channel_id = message.channel.id
-    vtuber_channel = ' '.join(msg[1:]).strip()  # name of vtuber channel
-    if vtuber_channel in all_members_list:  # vtuber ch is matched
+    msg = ' '.join(msg[1:]).strip()
+    lower_member_list = [x.lower() for x in all_members_list]
+    list_of_channels = [
+        string for string in lower_member_list if msg.lower() in string]
+    vtuber_channel = list_of_channels[0]
+    print(list_of_channels)
+    if vtuber_channel.lower() in lower_member_list:  # vtuber ch is matched
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
         with open('profiles.json', 'w') as g:
@@ -213,7 +230,7 @@ async def removechannel(message, msg):
     user_id = message.author.id
     channel_id = message.channel.id
     vtuber_channel = ' '.join(msg[1:]).strip()  # name of vtuber channel
-    if vtuber_channel in all_members_list:
+    if vtuber_channel.lower() in all_members_list.lower():
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
         with open('profiles.json', 'w') as g:
@@ -232,6 +249,7 @@ async def removechannel(message, msg):
                 await message.channel.send("Unable to remove " + vtuber_channel + " from your profile")
     else:
         await message.channel.send("Channel not found.")
+
 
 # runs the scraper for holo-schedule
 
@@ -254,32 +272,69 @@ async def ping():
     with open('profiles.json', 'r') as g:
         profiles = json.load(g)
         # list of dicts containing channel_id, user_id
-        for i in range(len(holo_schedule)):  # iterate through holo_schedule
-            vtuber_channel = holo_schedule[i].get("member")
-            user_list = profiles.get(vtuber_channel)
-            if holo_schedule[i].get("mentioned") == False:
-                # set 'mentioned' to true
-                holo_schedule[i]["mentioned"] = True
-                with open('holo_schedule.json', 'w') as h:
-                    json.dump(holo_schedule, h, indent=4)
-                for j in range(len(user_list)):  # iterate through user_list
-                    user_id = user_list[j].get("user_id")
-                    channel_id = int(
-                        user_list[j].get("channel_id"))
-                    channel = client.get_channel(id=channel_id)  # channel obj
+    for i in range(len(holo_schedule)):  # iterate through holo_schedule
+        vtuber_channel = holo_schedule[i].get("member")
+        user_list = profiles.get(vtuber_channel)
+        if holo_schedule[i].get("mentioned") == False:
+            # set 'mentioned' to true
+            holo_schedule[i]["mentioned"] = True
+            with open('holo_schedule.json', 'w') as h:
+                json.dump(holo_schedule, h, indent=4)
 
-                    # message send
+            holo_time = holo_schedule[i].get("time").split(':')
+            holo_date = holo_schedule[i].get("date")
+            unix_time = time_convert(holo_time, holo_date)
+            time_str = "<t:" + str(unix_time) + ">! \n"
+            header_str = vtuber_channel + " scheduled a stream at "
+            title_str = holo_schedule[i].get("title")
+            url = holo_schedule[i].get("url")
+            user_id = []
+            channel_id = []
+            channel = []
+            mention_str = ""
+            for j in range(len(user_list)):  # iterate through user_list
+                user_id.append(user_list[j].get("user_id"))
+                channel_id.append(int(
+                    user_list[j].get("channel_id")))
+                channel.append(client.get_channel(
+                    id=channel_id))  # channel obj
 
-                    holo_time = holo_schedule[i].get("time").split(':')
-                    holo_date = holo_schedule[i].get("date")
-                    unix_time = time_convert(holo_time, holo_date)
+                mention_str += "<@" + str(user_id[j]) + "> "
+            print(mention_str)
+            await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
 
-                    time_str = "<t:" + str(unix_time) + ">! \n"
-                    header_str = vtuber_channel + " scheduled a stream at "
-                    mention_str = "<@" + str(user_id) + ">\n"
-                    title_str = holo_schedule[i].get("title")
-                    url = holo_schedule[i].get("url")
-                    await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
+
+@tasks.loop(minutes=1)
+async def now_streaming():
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    with open('profiles.json', 'r') as g:
+        profiles = json.load(g)
+    tz = timezone("Asia/Tokyo")
+    now_time = time()
+    for i in range(3):  # you really only have to check the latest 3. iterating through holo_schedule
+        vtuber_channel = holo_schedule[i].get("member")
+        user_list = profiles.get(vtuber_channel)
+        for j in range((len(user_list))):
+            user_id = user_list[j].get("user_id")
+            channel_id = int(
+                user_list[j].get("channel_id"))
+            channel = client.get_channel(
+                id=channel_id)  # channel obj
+
+            # message send
+            holo_time = holo_schedule[i].get("time").split(':')
+            holo_date = holo_schedule[i].get("date")
+            # unix time for each schedule
+            unix_time = time_convert(holo_time, holo_date)
+            if unix_time - 70 < now_time:  # if the time is very close, then the scheduled time - 80 seconds should be less than now_time
+                # time_str = "<t:" + str(unix_time) + ">! \n"
+                header_str = vtuber_channel + " is now live! "
+                mention_str = "<@" + str(user_id) + ">\n"
+                title_str = holo_schedule[i].get("title")
+                url = holo_schedule[i].get("url")
+                await channel.send(header_str + title_str + "\n=> " + url + "\n" + mention_str)
+
 
 # converts from jp to unix time
 
@@ -299,11 +354,11 @@ def time_convert(holo_time, holo_date):  # takes an array in 'xx:xx' format
 
 
 # gets holo_schedule discord-ready
-async def schedule(message, msg):
+async def schedule(message):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     embedVar = discord.Embed(title="Schedule", color=0xfcc174)
-    for i in range(len(holo_schedule)):
+    for i in range(10):
         holo_time = holo_schedule[i].get("time").split(':')
         holo_date = holo_schedule[i].get("date")
         unix_time = time_convert(holo_time, holo_date)
@@ -312,8 +367,9 @@ async def schedule(message, msg):
         title_str = holo_schedule[i].get("title")
         url = holo_schedule[i].get("url")
         embedVar.add_field(name='{}~ **{}:**'.format(
-            time_str, member_str), value='{} \n {}'.format(title_str, url), inline=False)
+            time_str, member_str), value='{}'.format(url), inline=False)
     await message.channel.send(embed=embedVar)
+
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
 argparser = argparse.ArgumentParser(
@@ -338,10 +394,12 @@ argparser.add_argument(
 )
 
 
-MEMBER_LIST_STR = ("**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rose, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimatsi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha \n" +
-                   "**Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio \n" +
-                   "**HoloID:** Risu, Moona, Iofi, Ollie, Anya, Reine, Zeta, Kaela, Kobo \n" +
-                   "**HoloEN:** Calli, Kiara, Ina, Gura, Amelia, IRyS, Sana, Fauna, Kronii, Mumei, Baelz")
+MEMBER_LIST_STR = """
+**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rose, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimatsi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha
+**Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio
+**HoloID:** Ayunda Risu, Moona Hoshinova, Airani Iofifteen, Kureiji Ollie, Anya Melfissa, Pavolia Reine, Vestia Zeta, Kaela Kovalskia, Kobo Kanaeru
+**HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukomo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hako Baelz
+"""
 
 
 client.run(TOKEN)

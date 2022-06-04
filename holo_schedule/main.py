@@ -72,15 +72,6 @@ def main(args):
         if not filter_map[i]:
             continue
 
-        # # this is only for time zone differences! -- I should implement time zones in my own code.
-        # if shift_index:
-        #     if shift_index[0] == i - 1:
-        #         print('\n' + LABELS[1+date_delta] + '\n')
-
-        #     if shift_index[1] == i - 1:
-        #         print('\n' + LABELS[2+date_delta] + '\n')
-
-        # Check character type of member name
         # Contain Japanese
         if unicodedata.east_asian_width(members_list[i][0]) == 'W':
             m_space = ' ' * ((-2 * len(members_list[i]) + 18))
