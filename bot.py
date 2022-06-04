@@ -187,13 +187,8 @@ def translator(message):
 async def addchannel(message, msg):
     user_id = message.author.id
     channel_id = message.channel.id
-    msg = ' '.join(msg[1:]).strip()
-    lower_member_list = [x.lower() for x in all_members_list]
-    list_of_channels = [
-        string for string in lower_member_list if msg.lower() in string]
-    vtuber_channel = list_of_channels[0]
-    print(list_of_channels)
-    if vtuber_channel.lower() in lower_member_list:  # vtuber ch is matched
+    vtuber_channel = ' '.join(msg[1:]).strip()
+    if vtuber_channel in all_members_list:  # vtuber ch is matched
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
         with open('profiles.json', 'w') as g:
@@ -228,7 +223,6 @@ async def addchannel(message, msg):
 
 async def removechannel(message, msg):
     user_id = message.author.id
-    channel_id = message.channel.id
     vtuber_channel = ' '.join(msg[1:]).strip()  # name of vtuber channel
     if vtuber_channel.lower() in all_members_list.lower():
         with open('profiles.json', 'r') as f:
@@ -280,28 +274,24 @@ async def ping():
             holo_schedule[i]["mentioned"] = True
             with open('holo_schedule.json', 'w') as h:
                 json.dump(holo_schedule, h, indent=4)
-
-            holo_time = holo_schedule[i].get("time").split(':')
-            holo_date = holo_schedule[i].get("date")
-            unix_time = time_convert(holo_time, holo_date)
-            time_str = "<t:" + str(unix_time) + ">! \n"
-            header_str = vtuber_channel + " scheduled a stream at "
-            title_str = holo_schedule[i].get("title")
-            url = holo_schedule[i].get("url")
-            user_id = []
-            channel_id = []
-            channel = []
-            mention_str = ""
             for j in range(len(user_list)):  # iterate through user_list
-                user_id.append(user_list[j].get("user_id"))
-                channel_id.append(int(
-                    user_list[j].get("channel_id")))
-                channel.append(client.get_channel(
-                    id=channel_id))  # channel obj
+                user_id = user_list[j].get("user_id")
+                channel_id = int(
+                    user_list[j].get("channel_id"))
+                channel = client.get_channel(id=channel_id)  # channel obj
 
-                mention_str += "<@" + str(user_id[j]) + "> "
-            print(mention_str)
-            await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
+                # message send
+
+                holo_time = holo_schedule[i].get("time").split(':')
+                holo_date = holo_schedule[i].get("date")
+                unix_time = time_convert(holo_time, holo_date)
+
+                time_str = "<t:" + str(unix_time) + ">! \n"
+                header_str = vtuber_channel + " scheduled a stream at "
+                mention_str = "<@" + str(user_id) + ">\n"
+                title_str = holo_schedule[i].get("title")
+                url = holo_schedule[i].get("url")
+                await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
 
 
 @tasks.loop(minutes=1)
