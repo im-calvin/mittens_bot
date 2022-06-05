@@ -35,9 +35,17 @@ PREFIX = "$"
 holo_list = []
 
 
+@tasks.loop(seconds=15)
+async def refresh_holo_list():
+    holo_list = get_holo_schedule()
+
+
 @client.event
 async def on_ready():
-    get_holo_schedule.start()
+    # # これで前のholo_listを確認すると
+    # # 前の結果で確認
+
+    holo_list = get_holo_schedule()
     new_schedule.start()
     now_streaming.start()
     with open('holo_members.txt', 'rb') as f:
@@ -252,14 +260,27 @@ async def removechannel(message, msg):
 
 
 # runs the scraper for holo-schedule
+def get_holo_schedule():
+    local_list = []
+    local_list_unflattened = []
 
-@tasks.loop(seconds=15)
-async def get_holo_schedule():
     args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
-    holo_list = main.main(args, holo_list)
+    # flattenは不正解だけどこんな感じですね
+    local_list_unflattened.append(main.main(args, holo_list))
+
+    local_list_unflattened = []
+
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
-    holo_list = main.main(args, holo_list)
+    # flattenは不正解だけどこんな感じですね
+    local_list_unflattened.append(main.main(args, holo_list))
+
+    local_list = []
+    for subl in local_list_unflattened:
+        for item in subl:
+            local_list.append(item)
+
+    return local_list  # returns 'holo-schedule'
 
 # pings user on a rolling basis whenever new holo_schedule comes out
 
@@ -307,8 +328,10 @@ async def now_streaming():
     with open('profiles.json', 'r') as g:
         profiles = json.load(g)
     tz = timezone("Asia/Tokyo")
-    now_time = time()
-    for i in range(3):  # you really only have to check the latest 3. iterating through holo_schedule
+    presentDate = datetime.now()
+    now_unix = int(datetime.timestamp(presentDate)*1000)
+    print(now_unix)
+    for i in range(5):  # you really only have to check the latest 3. iterating through holo_schedule
         vtuber_channel = holo_schedule[i].get("member")
         user_list = profiles.get(vtuber_channel)
         for j in range((len(user_list))):
@@ -323,7 +346,8 @@ async def now_streaming():
             holo_date = holo_schedule[i].get("date")
             # unix time for each schedule
             unix_time = time_convert(holo_time, holo_date)
-            if unix_time - 70 < now_time:  # if the time is very close, then the scheduled time - 70 seconds should be less than now_time
+            print(unix_time)
+            if unix_time - 70 < now_unix:  # if the time is very close, then the scheduled time - 70 seconds should be less than now_time
                 # time_str = "<t:" + str(unix_time) + ">! \n"
                 header_str = vtuber_channel + " is now live! "
                 mention_str = "<@" + str(user_id) + ">\n"
@@ -345,7 +369,7 @@ def time_convert(holo_time, holo_date):  # takes an array in 'xx:xx' format
     japan_time = time(int(holo_time[0]), int(holo_time[1]))
     japan_dt = tz.localize(
         datetime.combine(japan_date, japan_time))
-    unix_time = int(japan_dt.timestamp())
+    unix_time = int(japan_dt.timestamp())*1000
     return unix_time  # returns time in unix format
 
 
@@ -391,10 +415,10 @@ argparser.add_argument(
 
 
 MEMBER_LIST_STR = """
-**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rose, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimatsi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha
+**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rose, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimachi Suisei Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha
 **Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio
 **HoloID:** Ayunda Risu, Moona Hoshinova, Airani Iofifteen, Kureiji Ollie, Anya Melfissa, Pavolia Reine, Vestia Zeta, Kaela Kovalskia, Kobo Kanaeru
-**HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukomo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hako Baelz
+**HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukumo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hakos Baelz
 """
 
 
