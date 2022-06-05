@@ -35,7 +35,7 @@ PREFIX = "$"
 holo_list = []
 
 
-@tasks.loop(seconds=15)
+@tasks.loop(seconds=15*60)
 async def refresh_holo_list():
     holo_list = get_holo_schedule()
 
@@ -285,9 +285,8 @@ def get_holo_schedule():
 # pings user on a rolling basis whenever new holo_schedule comes out
 
 
-@tasks.loop(seconds=20)
+@tasks.loop(seconds=15*60)
 async def new_schedule():
-    print('new-ping')
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     with open('profiles.json', 'r') as g:
@@ -329,9 +328,9 @@ async def now_streaming():
         profiles = json.load(g)
     tz = timezone("Asia/Tokyo")
     presentDate = datetime.now()
-    now_unix = int(datetime.timestamp(presentDate)*1000)
-    print(now_unix)
-    for i in range(5):  # you really only have to check the latest 3. iterating through holo_schedule
+    now_unix = int(datetime.timestamp(presentDate))
+    # you really only have to check the latest 5. iterating through holo_schedule
+    for i in range(len(holo_schedule)):
         vtuber_channel = holo_schedule[i].get("member")
         user_list = profiles.get(vtuber_channel)
         for j in range((len(user_list))):
@@ -340,14 +339,17 @@ async def now_streaming():
                 user_list[j].get("channel_id"))
             channel = client.get_channel(
                 id=channel_id)  # channel obj
-
+                
             # message send
             holo_time = holo_schedule[i].get("time").split(':')
             holo_date = holo_schedule[i].get("date")
             # unix time for each schedule
             unix_time = time_convert(holo_time, holo_date)
-            print(unix_time)
-            if unix_time - 70 < now_unix:  # if the time is very close, then the scheduled time - 70 seconds should be less than now_time
+            # if the time is very close, then the scheduled time - 70 seconds should be less than now_time
+            if unix_time < now_unix and holo_schedule[i].get("live_pinged") == False:
+                holo_schedule[i]["live_pinged"] = True
+                with open('holo_schedule.json', 'w') as f:
+                    json.dump(holo_schedule, f, indent=4)
                 # time_str = "<t:" + str(unix_time) + ">! \n"
                 header_str = vtuber_channel + " is now live! "
                 mention_str = "<@" + str(user_id) + ">\n"

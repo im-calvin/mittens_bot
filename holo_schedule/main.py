@@ -45,8 +45,6 @@ def main(args, holo_list):
 
     if args.tomorrow:
         date_delta += 1
-        # with open('holo_schedule.json', 'r') as g:  # get the schedule WITHOUT 'tomorrow'
-        #     holo_list = json.load(g)
 
     # All three lists have the same length
     lists_length = len(time_list)
@@ -90,7 +88,8 @@ def main(args, holo_list):
                 "url": url,
                 "title": title_list[i],
                 "date": "today",
-                "mentioned": False
+                "mentioned": False,
+                "live_pinged": False
             }
             )
             try:
@@ -119,7 +118,8 @@ def main(args, holo_list):
                 "url": url,
                 "title": title_list[i],
                 "date": "tomorrow",
-                "mentioned": False
+                "mentioned": False,
+                "live_pinged": False
             }
             )
 
