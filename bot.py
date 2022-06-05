@@ -34,10 +34,18 @@ all_members_list = []
 PREFIX = "$"
 holo_list = []
 
+@tasks.loop(seconds=15)
+def refresh_holo_list():
+    holo_list = get_holo_schedule()
 
 @client.event
 async def on_ready():
-    get_holo_schedule.start()
+    # これで前のholo_listを確認すると
+    # 前の結果で確認
+    for (x in holo_list):
+      # 何かする
+
+    holo_list = get_holo_schedule.start()
     new_schedule.start()
     now_streaming.start()
     with open('holo_members.txt', 'rb') as f:
@@ -252,14 +260,19 @@ async def removechannel(message, msg):
 
 
 # runs the scraper for holo-schedule
-
-@tasks.loop(seconds=15)
 async def get_holo_schedule():
+    local_list = []
+
     args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
-    holo_list = main.main(args, holo_list)
+    # flattenは不正解だけどこんな感じですね
+    local_list.append(main.main(args, holo_list).flatten())
+
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
-    holo_list = main.main(args, holo_list)
+    # flattenは不正解だけどこんな感じですね
+    local_list.append(main.main(args, holo_list).flatten())
+
+    return local_list
 
 # pings user on a rolling basis whenever new holo_schedule comes out
 
