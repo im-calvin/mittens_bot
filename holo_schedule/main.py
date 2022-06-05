@@ -13,9 +13,10 @@ from holo_schedule.src.util import *
 LABELS = ("Yesterday", "Today", "Tomorrow", "The day after tomorrow")
 
 
-def main(args):
+def main(args, holo_list):
 
-    holo_list = []
+    # holo_list = []
+
     if args.date:
         show_date()
         sys.exit(0)
@@ -44,8 +45,8 @@ def main(args):
 
     if args.tomorrow:
         date_delta += 1
-        with open('holo_schedule.json', 'r') as g:  # get the schedule WITHOUT 'tomorrow'
-            holo_list = json.load(g)
+        # with open('holo_schedule.json', 'r') as g:  # get the schedule WITHOUT 'tomorrow'
+        #     holo_list = json.load(g)
 
     # All three lists have the same length
     lists_length = len(time_list)
@@ -140,5 +141,5 @@ def main(args):
                     json.dump(holo_list, f, indent=4)
 
                     f.close()
-    holo_list = []
     print('holo_schedule.json updated!')
+    return holo_list

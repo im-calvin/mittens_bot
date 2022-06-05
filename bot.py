@@ -31,8 +31,8 @@ translate_client = translate.Client.from_service_account_json(
 
 
 all_members_list = []
-lower_member_list = []
 PREFIX = "$"
+holo_list = []
 
 
 @client.event
@@ -253,20 +253,20 @@ async def removechannel(message, msg):
 
 # runs the scraper for holo-schedule
 
-
-@tasks.loop(seconds=15*60)
+@tasks.loop(seconds=15)
 async def get_holo_schedule():
     args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
-    main.main(args)
+    holo_list = main.main(args, holo_list)
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
-    main.main(args)
+    holo_list = main.main(args, holo_list)
 
 # pings user on a rolling basis whenever new holo_schedule comes out
 
 
-@tasks.loop(seconds=15*60)
+@tasks.loop(seconds=20)
 async def new_schedule():
+    print('new-ping')
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     with open('profiles.json', 'r') as g:
