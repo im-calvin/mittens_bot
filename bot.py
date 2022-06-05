@@ -44,7 +44,7 @@ async def refresh_holo_list():
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
-    # 
+    #
 
     holo_list = get_holo_schedule()
     new_schedule.start()
@@ -95,6 +95,9 @@ async def on_message(message):
             return
         if command == "members":
             await message.channel.send(MEMBER_LIST_STR)
+            return
+        if command == "list":
+            await follow_list(message)
             return
 
     # translate
@@ -180,7 +183,7 @@ def translator(message):
     if "https://" in message.content:
         san_msg = sanitizer_links(message.content)
 
-    if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko" or lang == "zh-HK":
+    if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko" or lang == "zh":
         # zh-TW/HK = taiwan/hongkong, zh-CN = simplified
         if translate_client.detect_language(san_msg)["confidence"] > 0.80:
             transl_msg = translate_client.translate(san_msg, "en", "text")[
@@ -203,13 +206,14 @@ async def addchannel(message, msg):
     user_id = message.author.id
     channel_id = message.channel.id
     msg = ' '.join(msg[1:]).strip()
+    if msg == '':
+        return
     lower_member_list = [x.lower() for x in all_members_list]
     try:
         possibleMatch = next(
             x for x in lower_member_list if msg.lower() in x)
-
     except StopIteration:
-        await message.channel.send('couldnt find channel u specified')
+        await message.channel.send("Couldn't find the channel you specified.")
         return
     indexOfMember = lower_member_list.index(possibleMatch)
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
@@ -236,20 +240,31 @@ async def addchannel(message, msg):
                 json.dump(profiles, g, indent=4)
                 await message.channel.send("Added " + vtuber_channel + " to your profile")
     else:
-        await message.channel.send("Please choose a channel. You may choose from: \n" + MEMBER_LIST_STR)
+        await message.channel.send("Couldn't find the channel you specified.")
 
-# async def list(message, msg):
-#     with open('profiles.json', 'r') as f:
-#         profiles = json.load(f)
-#     user_id = message.author.id
-#     vtuber_channel = ' '.join(msg[1:]).strip()
-#     user_list = profiles[vtuber_channel]
-#     await message.channel.send(vtuber_list)
+
+async def follow_list(message):
+    with open('profiles.json', 'r') as f:
+        profiles = json.load(f)
+    user_id = message.author.id
+    follow_list = []
+    for keys, values in profiles.items():  # iterating through the big dict
+        for i in range(len(values)):  # iterating through the array
+            try:
+                if user_id in values[i].values():
+                    follow_list.append(keys)
+            except KeyError:
+                continue
+    follow_list = ', '.join(follow_list)
+    header_str = "**You are currently following: \n**"
+    await message.channel.send(header_str + follow_list)
 
 
 async def removechannel(message, msg):
     user_id = message.author.id
     msg = ' '.join(msg[1:]).strip()
+    if msg == '':
+        return
     lower_member_list = [x.lower() for x in all_members_list]
     try:
         possibleMatch = next(
