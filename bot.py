@@ -44,6 +44,7 @@ async def refresh_holo_list():
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
+    # 
 
     holo_list = get_holo_schedule()
     new_schedule.start()
@@ -201,8 +202,19 @@ def translator(message):
 async def addchannel(message, msg):
     user_id = message.author.id
     channel_id = message.channel.id
-    vtuber_channel = ' '.join(msg[1:]).strip()
-    if vtuber_channel in all_members_list:  # vtuber ch is matched
+    msg = ' '.join(msg[1:]).strip()
+    lower_member_list = [x.lower() for x in all_members_list]
+    try:
+        possibleMatch = next(
+            x for x in lower_member_list if msg.lower() in x)
+
+    except StopIteration:
+        await message.channel.send('couldnt find channel u specified')
+        return
+    indexOfMember = lower_member_list.index(possibleMatch)
+    if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
+
+        vtuber_channel = all_members_list[indexOfMember]
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
         with open('profiles.json', 'w') as g:
@@ -237,8 +249,17 @@ async def addchannel(message, msg):
 
 async def removechannel(message, msg):
     user_id = message.author.id
-    vtuber_channel = ' '.join(msg[1:]).strip()  # name of vtuber channel
-    if vtuber_channel in all_members_list:
+    msg = ' '.join(msg[1:]).strip()
+    lower_member_list = [x.lower() for x in all_members_list]
+    try:
+        possibleMatch = next(
+            x for x in lower_member_list if msg.lower() in x)
+    except StopIteration:
+        await message.channel.send('couldnt find channel u specified')
+        return
+    indexOfMember = lower_member_list.index(possibleMatch)
+    if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
+        vtuber_channel = all_members_list[indexOfMember]
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
         with open('profiles.json', 'w') as g:
@@ -339,7 +360,7 @@ async def now_streaming():
                 user_list[j].get("channel_id"))
             channel = client.get_channel(
                 id=channel_id)  # channel obj
-                
+
             # message send
             holo_time = holo_schedule[i].get("time").split(':')
             holo_date = holo_schedule[i].get("date")
