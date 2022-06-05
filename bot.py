@@ -35,18 +35,13 @@ PREFIX = "$"
 holo_list = []
 
 
-@tasks.loop(seconds=15*60)
-async def refresh_holo_list():
-    holo_list = get_holo_schedule()
-
-
 @client.event
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
     #
-
-    holo_list = get_holo_schedule()
+    firstScrape()
+    get_holo_schedule.start()  # background task
     new_schedule.start()
     now_streaming.start()
     with open('holo_members.txt', 'rb') as f:
@@ -294,37 +289,62 @@ async def removechannel(message, msg):
     else:
         await message.channel.send("Channel not found.")
 
-
 # runs the scraper for holo-schedule
-def get_holo_schedule():
+
+
+def firstScrape():
+    args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
+    holo_list = main.main(args, holo_list=[])
+    args = argparser.parse_args(
+        ["--tomorrow", "--eng", "--all", "--title", "--future"])
+    holo_list = main.main(args, holo_list)
+
+
+@tasks.loop(seconds=15*60)
+async def get_holo_schedule():
     local_list = []
     local_list_unflattened = []
+
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
 
     args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
     local_list_unflattened.append(main.main(args, holo_list))
-
-    local_list_unflattened = []
+    # this appends
 
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
     local_list_unflattened.append(main.main(args, holo_list))
+    # this appends
 
-    local_list = []
     for subl in local_list_unflattened:
         for item in subl:
             local_list.append(item)
 
-    return local_list  # returns 'holo-schedule'
+    # comparing if old file is the same as new file
+
+    list_of_old_values = [dict['url'] for dict in holo_schedule]
+
+    for i in range(len(local_list)):
+        if local_list[i].get("url") not in list_of_old_values:
+            holo_schedule.append(local_list[i])
+
+    with open('holo_schedule.json', 'w') as f:
+        json.dump(holo_schedule, f, indent=4)
+
+    return
 
 # pings user on a rolling basis whenever new holo_schedule comes out
 
 
 @tasks.loop(seconds=15*60)
 async def new_schedule():
+    print('new_schedule checking in')
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
+    # holo_schedule = holo_list
     with open('profiles.json', 'r') as g:
         profiles = json.load(g)
         # list of dicts containing channel_id, user_id

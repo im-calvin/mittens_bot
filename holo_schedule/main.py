@@ -15,8 +15,6 @@ LABELS = ("Yesterday", "Today", "Tomorrow", "The day after tomorrow")
 
 def main(args, holo_list):
 
-    # holo_list = []
-
     if args.date:
         show_date()
         sys.exit(0)
@@ -141,5 +139,5 @@ def main(args, holo_list):
                     json.dump(holo_list, f, indent=4)
 
                     f.close()
-    print('holo_schedule.json updated!')
+
     return holo_list

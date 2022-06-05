@@ -57,7 +57,12 @@
     "Hizaki Gamma": [],
     "Minase Rio": [],
     "Ayunda Risu": [],
-    "Moona Hoshinova": [],
+    "Moona Hoshinova": [
+        {
+            "channel_id": 445609667431759874,
+            "user_id": 182310565333565440
+        }
+    ],
     "Airani Iofifteen": [],
     "Kureiji Ollie": [],
     "Anya Melfissa": [],
@@ -70,12 +75,20 @@
         {
             "channel_id": 445609667431759874,
             "user_id": 277908415857295361
+        },
+        {
+            "channel_id": 445609667431759874,
+            "user_id": 182310565333565440
         }
     ],
     "Takanashi Kiara": [
         {
             "channel_id": 445609667431759874,
             "user_id": 277908415857295361
+        },
+        {
+            "channel_id": 445609667431759874,
+            "user_id": 182310565333565440
         }
     ],
     "Ninomae Ina'nis": [
