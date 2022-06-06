@@ -41,8 +41,9 @@ async def on_ready():
     # # 前の結果で確認
     #
     firstScrape()
-    get_holo_schedule.start()  # background task
+    # must run new_schedule BEFORE get_holo_schedule and AFTER firstScrape
     new_schedule.start()
+    get_holo_schedule.start()  # background task
     now_streaming.start()
     with open('holo_members.txt', 'rb') as f:
         file_content = f.readlines()[1:]  # Ignore first row
@@ -298,42 +299,42 @@ def firstScrape():
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list)
+    print('firstScrape done!')
 
 
 @tasks.loop(seconds=15*60)
 async def get_holo_schedule():
-    local_list = []
-    local_list_unflattened = []
 
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
 
     args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
-    local_list_unflattened.append(main.main(args, holo_list))
+    today_list = (main.main(args, holo_list=[]))
+
     # this appends
 
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
-    local_list_unflattened.append(main.main(args, holo_list))
+    tomorrow_list = (main.main(args, holo_list=[]))
+
     # this appends
 
-    for subl in local_list_unflattened:
-        for item in subl:
-            local_list.append(item)
-
-    # comparing if old file is the same as new file
+    joinedList = [*today_list, *tomorrow_list]
 
     list_of_old_values = [dict['url'] for dict in holo_schedule]
 
-    for i in range(len(local_list)):
-        if local_list[i].get("url") not in list_of_old_values:
-            holo_schedule.append(local_list[i])
+    for i in range(len(joinedList)):
+        # if the new list entry is the exact same as the old list
+        if joinedList[i].get("url") in list_of_old_values:
+            joinedList[i]["mentioned"] = True
+            # holo_schedule.append(local_list[i])
 
     with open('holo_schedule.json', 'w') as f:
-        json.dump(holo_schedule, f, indent=4)
+        json.dump(joinedList, f, indent=4)
 
+    print('holo_schedule.json updated')
     return
 
 # pings user on a rolling basis whenever new holo_schedule comes out
@@ -341,7 +342,7 @@ async def get_holo_schedule():
 
 @tasks.loop(seconds=15*60)
 async def new_schedule():
-    print('new_schedule checking in')
+    print('checking schedule')
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     # holo_schedule = holo_list

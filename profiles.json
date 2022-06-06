@@ -21,7 +21,12 @@
     "Murasaki Shion": [],
     "Oozora Subaru": [],
     "Ookami Mio": [],
-    "Nekomata Okayu": [],
+    "Nekomata Okayu": [
+        {
+            "channel_id": 445609667431759874,
+            "user_id": 182310565333565440
+        }
+    ],
     "Inugami Korone": [],
     "Shiranui Flare": [],
     "Shirogane Noel": [],
@@ -57,12 +62,7 @@
     "Hizaki Gamma": [],
     "Minase Rio": [],
     "Ayunda Risu": [],
-    "Moona Hoshinova": [
-        {
-            "channel_id": 445609667431759874,
-            "user_id": 182310565333565440
-        }
-    ],
+    "Moona Hoshinova": [],
     "Airani Iofifteen": [],
     "Kureiji Ollie": [],
     "Anya Melfissa": [],
