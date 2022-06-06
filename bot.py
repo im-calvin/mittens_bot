@@ -42,7 +42,7 @@ async def on_ready():
     #
     firstScrape()
     # must run new_schedule BEFORE get_holo_schedule and AFTER firstScrape
-    new_schedule.start()
+    # new_schedule.start()
     get_holo_schedule.start()  # background task
     now_streaming.start()
     with open('holo_members.txt', 'rb') as f:
@@ -301,10 +301,13 @@ def firstScrape():
     holo_list = main.main(args, holo_list)
     print('firstScrape done!')
 
+# scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
 
-@tasks.loop(seconds=15*60)
+
+@tasks.loop(seconds=30)
 async def get_holo_schedule():
 
+    # scraping portion
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
 
@@ -323,25 +326,24 @@ async def get_holo_schedule():
 
     joinedList = [*today_list, *tomorrow_list]
 
-    list_of_old_values = [dict['url'] for dict in holo_schedule]
+    list_of_old_url = [dict['url'] for dict in holo_schedule]
 
     for i in range(len(joinedList)):
         # if the new list entry is the exact same as the old list
-        if joinedList[i].get("url") in list_of_old_values:
+        if joinedList[i].get("url") in list_of_old_url:
             joinedList[i]["mentioned"] = True
+            # only if live-pinged is true, update the new list for live-pinged to be true
+            for j in range(len(holo_schedule)):
+                if holo_schedule[j].get("url") == joinedList[i].get("url"):
+                    joinedList[i]["live_pinged"] = True
             # holo_schedule.append(local_list[i])
 
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
 
     print('holo_schedule.json updated')
-    return
-
-# pings user on a rolling basis whenever new holo_schedule comes out
-
-
-@tasks.loop(seconds=15*60)
-async def new_schedule():
+#####
+# pinging portion
     print('checking schedule')
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
@@ -376,6 +378,45 @@ async def new_schedule():
                 url = holo_schedule[i].get("url")
                 await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
 
+    return
+
+
+# @tasks.loop(seconds=15*60)
+# async def new_schedule():
+#     print('checking schedule')
+#     with open('holo_schedule.json', 'r') as f:
+#         holo_schedule = json.load(f)
+#     # holo_schedule = holo_list
+#     with open('profiles.json', 'r') as g:
+#         profiles = json.load(g)
+#         # list of dicts containing channel_id, user_id
+#     for i in range(len(holo_schedule)):  # iterate through holo_schedule
+#         vtuber_channel = holo_schedule[i].get("member")
+#         user_list = profiles.get(vtuber_channel)
+#         if holo_schedule[i].get("mentioned") == False:
+#             # set 'mentioned' to true
+#             holo_schedule[i]["mentioned"] = True
+#             with open('holo_schedule.json', 'w') as h:
+#                 json.dump(holo_schedule, h, indent=4)
+#             for j in range(len(user_list)):  # iterate through user_list
+#                 user_id = user_list[j].get("user_id")
+#                 channel_id = int(
+#                     user_list[j].get("channel_id"))
+#                 channel = client.get_channel(id=channel_id)  # channel obj
+
+#                 # message send
+
+#                 holo_time = holo_schedule[i].get("time").split(':')
+#                 holo_date = holo_schedule[i].get("date")
+#                 unix_time = time_convert(holo_time, holo_date)
+
+#                 time_str = "<t:" + str(unix_time) + ">! \n"
+#                 header_str = vtuber_channel + " scheduled a stream at "
+#                 mention_str = "<@" + str(user_id) + ">\n"
+#                 title_str = holo_schedule[i].get("title")
+#                 url = holo_schedule[i].get("url")
+#                 await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
+
 
 @tasks.loop(minutes=1)
 async def now_streaming():
@@ -383,7 +424,6 @@ async def now_streaming():
         holo_schedule = json.load(f)
     with open('profiles.json', 'r') as g:
         profiles = json.load(g)
-    tz = timezone("Asia/Tokyo")
     presentDate = datetime.now()
     now_unix = int(datetime.timestamp(presentDate))
     # you really only have to check the latest 5. iterating through holo_schedule
