@@ -1,132 +1,86 @@
 {
-  "hololive": [],
-  "Tokino Sora": [],
-  "Roboco-san": [],
-  "Sakura Miko": [],
-  "AZKi": [],
-  "Shirakami Fubuki": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 535296448233996288
-    }
-  ],
-  "Natsuiro Matsuri": [],
-  "Yozora Mel": [],
-  "Akai Haato": [],
-  "Aki Rosenthal": [],
-  "Minato Aqua": [],
-  "Yuzuki Choco": [],
-  "Yuzuki Choko Sub": [],
-  "Nakiri Ayame": [],
-  "Murasaki Shion": [],
-  "Oozora Subaru": [],
-  "Ookami Mio": [],
-  "Nekomata Okayu": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    }
-  ],
-  "Inugami Korone": [],
-  "Shiranui Flare": [],
-  "Shirogane Noel": [],
-  "Houshou Marine": [],
-  "Usada Pekora": [],
-  "Uruha Rushia": [],
-  "Hoshimachi Suisei": [],
-  "Amane Kanata": [],
-  "Tsunomaki Watame": [],
-  "Tokoyami Towa": [],
-  "Himemori Luna": [],
-  "Yukihana Lamy": [],
-  "Momosuzu Nene": [],
-  "Sishiro Botan": [],
-  "Omaru Polka": [],
-  "La+ Darknesss": [],
-  "Takane Lui": [],
-  "Hakui Koyori": [],
-  "Sakamata Chloe": [],
-  "Kazama Iroha": [],
-  "holostars": [],
-  "Hanasaki Miyabi": [],
-  "Kanade Izuru": [],
-  "Arurandeisu": [],
-  "Rikka": [],
-  "Astel Leda": [],
-  "Kishidou Tenma": [],
-  "Yukoku Roberu": [],
-  "Kageyama Shien": [],
-  "Aragami Oga": [],
-  "Yatogami Fuma": [],
-  "Utsugi Uyu": [],
-  "Hizaki Gamma": [],
-  "Minase Rio": [],
-  "Ayunda Risu": [],
-  "Moona Hoshinova": [],
-  "Airani Iofifteen": [],
-  "Kureiji Ollie": [],
-  "Anya Melfissa": [],
-  "Pavolia Reine": [],
-  "Vestia Zeta": [],
-  "Kaela Kovalskia": [],
-  "Kobo Kanaeru": [],
-  "holoID": [],
-  "Mori Calliope": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    }
-  ],
-  "Takanashi Kiara": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    }
-  ],
-  "Ninomae Ina'nis": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    },
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    }
-  ],
-  "Gawr Gura": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    },
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    }
-  ],
-  "Watson Amelia": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    }
-  ],
-  "holoEN": [],
-  "IRyS": [],
-  "Tsukumo Sana": [],
-  "Ceres Fauna": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    }
-  ],
-  "Ouro Kronii": [],
-  "Nanashi Mumei": [],
-  "Hakos Baelz": []
+    "hololive": [],
+    "Tokino Sora": [],
+    "Roboco-san": [],
+    "Sakura Miko": [],
+    "AZKi": [],
+    "Shirakami Fubuki": [],
+    "Natsuiro Matsuri": [],
+    "Yozora Mel": [],
+    "Akai Haato": [],
+    "Aki Rosenthal": [],
+    "Minato Aqua": [],
+    "Yuzuki Choco": [],
+    "Yuzuki Choko Sub": [],
+    "Nakiri Ayame": [],
+    "Murasaki Shion": [],
+    "Oozora Subaru": [],
+    "Ookami Mio": [],
+    "Nekomata Okayu": [],
+    "Inugami Korone": [],
+    "Shiranui Flare": [],
+    "Shirogane Noel": [],
+    "Houshou Marine": [],
+    "Usada Pekora": [],
+    "Uruha Rushia": [],
+    "Hoshimachi Suisei": [],
+    "Amane Kanata": [],
+    "Tsunomaki Watame": [],
+    "Tokoyami Towa": [],
+    "Himemori Luna": [],
+    "Yukihana Lamy": [],
+    "Momosuzu Nene": [],
+    "Sishiro Botan": [],
+    "Omaru Polka": [],
+    "La+ Darknesss": [],
+    "Takane Lui": [],
+    "Hakui Koyori": [],
+    "Sakamata Chloe": [],
+    "Kazama Iroha": [],
+    "holostars": [],
+    "Hanasaki Miyabi": [],
+    "Kanade Izuru": [],
+    "Arurandeisu": [],
+    "Rikka": [],
+    "Astel Leda": [],
+    "Kishidou Tenma": [],
+    "Yukoku Roberu": [],
+    "Kageyama Shien": [],
+    "Aragami Oga": [],
+    "Yatogami Fuma": [],
+    "Utsugi Uyu": [],
+    "Hizaki Gamma": [],
+    "Minase Rio": [],
+    "Ayunda Risu": [],
+    "Moona Hoshinova": [],
+    "Airani Iofifteen": [],
+    "Kureiji Ollie": [],
+    "Anya Melfissa": [],
+    "Pavolia Reine": [],
+    "Vestia Zeta": [],
+    "Kaela Kovalskia": [],
+    "Kobo Kanaeru": [],
+    "holoID": [],
+    "Mori Calliope": [],
+    "Takanashi Kiara": [],
+    "Ninomae Ina'nis": [],
+    "Gawr Gura": [
+        {
+            "channel_id": 948120054283796480,
+            "user_id": 182310565333565440
+        }
+    ],
+    "Watson Amelia": [
+        {
+            "channel_id": 948120054283796480,
+            "user_id": 182310565333565440
+        }
+    ],
+    "holoEN": [],
+    "IRyS": [],
+    "Tsukumo Sana": [],
+    "Ceres Fauna": [],
+    "Ouro Kronii": [],
+    "Nanashi Mumei": [],
+    "Hakos Baelz": []
 }

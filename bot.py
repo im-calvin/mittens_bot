@@ -348,12 +348,17 @@ async def get_holo_schedule():
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
-    joinedList = (main.main(args, today_list))
+    tomorrow_list = (main.main(args, today_list))
 
     # this appends
 
+    try:
+        joinedList = today_list + tomorrow_list
+    except TypeError:  # if tmr_list is empty
+        joinedList = today_list
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
+    print(joinedList)
     for i in range(len(joinedList)):
         for j in range(len(holo_schedule)):
             # if the new list entry is the exact same as the old list
