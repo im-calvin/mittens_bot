@@ -15,7 +15,12 @@
     "Akai Haato": [],
     "Aki Rosenthal": [],
     "Minato Aqua": [],
-    "Yuzuki Choco": [],
+    "Yuzuki Choco": [
+        {
+            "channel_id": 445609667431759874,
+            "user_id": 182310565333565440
+        }
+    ],
     "Yuzuki Choko Sub": [],
     "Nakiri Ayame": [],
     "Murasaki Shion": [],
@@ -24,10 +29,6 @@
     "Nekomata Okayu": [
         {
             "channel_id": 445609667431759874,
-            "user_id": 182310565333565440
-        },
-        {
-            "channel_id": 948120054283796480,
             "user_id": 182310565333565440
         }
     ],
