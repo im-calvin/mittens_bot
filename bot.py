@@ -244,11 +244,12 @@ async def follow_list(message):
     with open('profiles.json', 'r') as f:
         profiles = json.load(f)
     user_id = message.author.id
+    channel_id = message.channel.id
     follow_list = []
     for keys, values in profiles.items():  # iterating through the big dict
         for i in range(len(values)):  # iterating through the array
             try:
-                if user_id in values[i].values():
+                if user_id in values[i].values() and channel_id in values[i].values():
                     follow_list.append(keys)
             except KeyError:
                 continue
@@ -307,7 +308,7 @@ async def firstScrape():
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
 
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=15*60)
 async def get_holo_schedule():
 
     # scraping portion
@@ -328,7 +329,6 @@ async def get_holo_schedule():
 
     # this appends
 
-    
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
     for i in range(len(joinedList)):
