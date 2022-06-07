@@ -11,6 +11,7 @@ from holo_schedule import main
 from discord.ext import commands, tasks
 import argparse
 import json
+import asyncio
 
 from datetime import datetime, timedelta, time
 from time import mktime
@@ -40,7 +41,7 @@ async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
     #
-    firstScrape()
+    await firstScrape()
     # must run new_schedule BEFORE get_holo_schedule and AFTER firstScrape
     # new_schedule.start()
     get_holo_schedule.start()  # background task
@@ -78,7 +79,7 @@ async def on_message(message):
         msg = message.content[1:].split(' ')
         command = msg[0]
         if command == "help":
-            await message.channel.send('add, remove, schedule, members')
+            await message.channel.send('add, remove, schedule, members, list')
             return
         if command == "add":
             await addchannel(message, msg)
@@ -119,8 +120,8 @@ async def on_message_edit(before, after):
     try:
         bot_msg = message_dict[after.id]
     except KeyError:
-        bot_msg = await message.channel.send(transl_msg)
-        message_dict[message.id] = bot_msg
+        bot_msg = await after.channel.send(transl_msg)
+        message_dict[after.id] = bot_msg
 
     # message object (from user)
     message = await channel.fetch_message(bot_msg.id)
@@ -293,13 +294,15 @@ async def removechannel(message, msg):
 # runs the scraper for holo-schedule
 
 
-def firstScrape():
+async def firstScrape():
     args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list=[])
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list)
     print('firstScrape done!')
+    await asyncio.sleep(1.0)
+    await new_schedule()
 
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
 
@@ -320,31 +323,36 @@ async def get_holo_schedule():
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
-    tomorrow_list = (main.main(args, holo_list=[]))
+    joinedList = (main.main(args, today_list))
+####
 
     # this appends
 
-    joinedList = [*today_list, *tomorrow_list]
-
+    
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
     for i in range(len(joinedList)):
-        # if the new list entry is the exact same as the old list
-        if joinedList[i].get("url") in list_of_old_url:
-            joinedList[i]["mentioned"] = True
-            # only if live-pinged is true, update the new list for live-pinged to be true
-            for j in range(len(holo_schedule)):
-                if holo_schedule[j].get("url") == joinedList[i].get("url"):
-                    joinedList[i]["live_pinged"] = True
+        for j in range(len(holo_schedule)):
+            # if the new list entry is the exact same as the old list
+            if joinedList[i].get("url") in list_of_old_url and holo_schedule[j]["mentioned"] == True:
+                joinedList[i]["mentioned"] = True
+                # only if live-pinged is true, update the new list for live-pinged to be true
+            if holo_schedule[j].get("url") == joinedList[i].get("url") and holo_schedule[j]["live_pinged"] == True:
+                joinedList[i]["live_pinged"] = True
             # holo_schedule.append(local_list[i])
 
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
 
     print('holo_schedule.json updated')
+
+    await new_schedule()
 #####
 # pinging portion
-    print('checking schedule')
+
+
+async def new_schedule():
+
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     # holo_schedule = holo_list
@@ -377,45 +385,7 @@ async def get_holo_schedule():
                 title_str = holo_schedule[i].get("title")
                 url = holo_schedule[i].get("url")
                 await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
-
-    return
-
-
-# @tasks.loop(seconds=15*60)
-# async def new_schedule():
-#     print('checking schedule')
-#     with open('holo_schedule.json', 'r') as f:
-#         holo_schedule = json.load(f)
-#     # holo_schedule = holo_list
-#     with open('profiles.json', 'r') as g:
-#         profiles = json.load(g)
-#         # list of dicts containing channel_id, user_id
-#     for i in range(len(holo_schedule)):  # iterate through holo_schedule
-#         vtuber_channel = holo_schedule[i].get("member")
-#         user_list = profiles.get(vtuber_channel)
-#         if holo_schedule[i].get("mentioned") == False:
-#             # set 'mentioned' to true
-#             holo_schedule[i]["mentioned"] = True
-#             with open('holo_schedule.json', 'w') as h:
-#                 json.dump(holo_schedule, h, indent=4)
-#             for j in range(len(user_list)):  # iterate through user_list
-#                 user_id = user_list[j].get("user_id")
-#                 channel_id = int(
-#                     user_list[j].get("channel_id"))
-#                 channel = client.get_channel(id=channel_id)  # channel obj
-
-#                 # message send
-
-#                 holo_time = holo_schedule[i].get("time").split(':')
-#                 holo_date = holo_schedule[i].get("date")
-#                 unix_time = time_convert(holo_time, holo_date)
-
-#                 time_str = "<t:" + str(unix_time) + ">! \n"
-#                 header_str = vtuber_channel + " scheduled a stream at "
-#                 mention_str = "<@" + str(user_id) + ">\n"
-#                 title_str = holo_schedule[i].get("title")
-#                 url = holo_schedule[i].get("url")
-#                 await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
+    print('checking schedule')
 
 
 @tasks.loop(minutes=1)

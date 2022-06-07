@@ -4,12 +4,7 @@
     "Roboco-san": [],
     "Sakura Miko": [],
     "AZKi": [],
-    "Shirakami Fubuki": [
-        {
-            "channel_id": 445609667431759874,
-            "user_id": 535296448233996288
-        }
-    ],
+    "Shirakami Fubuki": [],
     "Natsuiro Matsuri": [],
     "Yozora Mel": [],
     "Akai Haato": [],
@@ -33,7 +28,12 @@
     "Houshou Marine": [],
     "Usada Pekora": [],
     "Uruha Rushia": [],
-    "Hoshimachi Suisei": [],
+    "Hoshimachi Suisei": [
+        {
+            "channel_id": 445609667431759874,
+            "user_id": 182310565333565440
+        }
+    ],
     "Amane Kanata": [],
     "Tsunomaki Watame": [],
     "Tokoyami Towa": [],
@@ -44,7 +44,12 @@
     "Omaru Polka": [],
     "La+ Darknesss": [],
     "Takane Lui": [],
-    "Hakui Koyori": [],
+    "Hakui Koyori": [
+        {
+            "channel_id": 948120054283796480,
+            "user_id": 182310565333565440
+        }
+    ],
     "Sakamata Chloe": [],
     "Kazama Iroha": [],
     "holostars": [],
@@ -59,7 +64,12 @@
     "Aragami Oga": [],
     "Yatogami Fuma": [],
     "Utsugi Uyu": [],
-    "Hizaki Gamma": [],
+    "Hizaki Gamma": [
+        {
+            "channel_id": 948120054283796480,
+            "user_id": 182310565333565440
+        }
+    ],
     "Minase Rio": [],
     "Ayunda Risu": [],
     "Moona Hoshinova": [],
@@ -73,60 +83,39 @@
     "holoID": [],
     "Mori Calliope": [
         {
-            "channel_id": 445609667431759874,
-            "user_id": 277908415857295361
-        },
-        {
-            "channel_id": 445609667431759874,
+            "channel_id": 948120054283796480,
             "user_id": 182310565333565440
         }
     ],
     "Takanashi Kiara": [
         {
-            "channel_id": 445609667431759874,
-            "user_id": 277908415857295361
-        },
-        {
-            "channel_id": 445609667431759874,
+            "channel_id": 948120054283796480,
             "user_id": 182310565333565440
         }
     ],
-    "Ninomae Ina'nis": [
-        {
-            "channel_id": 445609667431759874,
-            "user_id": 182310565333565440
-        },
-        {
-            "channel_id": 445609667431759874,
-            "user_id": 277908415857295361
-        }
-    ],
+    "Ninomae Ina'nis": [],
     "Gawr Gura": [
         {
-            "channel_id": 445609667431759874,
+            "channel_id": 948120054283796480,
             "user_id": 182310565333565440
-        },
-        {
-            "channel_id": 445609667431759874,
-            "user_id": 277908415857295361
         }
     ],
-    "Watson Amelia": [
-        {
-            "channel_id": 445609667431759874,
-            "user_id": 277908415857295361
-        }
-    ],
+    "Watson Amelia": [],
     "holoEN": [],
     "IRyS": [],
     "Tsukumo Sana": [],
     "Ceres Fauna": [
         {
+            "channel_id": 948120054283796480,
+            "user_id": 182310565333565440
+        }
+    ],
+    "Ouro Kronii": [
+        {
             "channel_id": 445609667431759874,
             "user_id": 182310565333565440
         }
     ],
-    "Ouro Kronii": [],
     "Nanashi Mumei": [],
     "Hakos Baelz": []
 }
