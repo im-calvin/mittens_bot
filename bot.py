@@ -1,12 +1,12 @@
 # bot.py
 from array import typecodes
 import os
+from re import M
 import discord
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
 import json
 
-from platformdirs import user_log_dir
 from holo_schedule import main
 from discord.ext import commands, tasks
 import argparse
@@ -32,6 +32,7 @@ translate_client = translate.Client.from_service_account_json(
 
 
 all_members_list = []
+lower_member_list = []
 PREFIX = "$"
 holo_list = []
 
@@ -42,8 +43,7 @@ async def on_ready():
     # # 前の結果で確認
     #
     await firstScrape()
-    # must run new_schedule BEFORE get_holo_schedule and AFTER firstScrape
-    # new_schedule.start()
+
     get_holo_schedule.start()  # background task
     now_streaming.start()
     with open('holo_members.txt', 'rb') as f:
@@ -88,7 +88,15 @@ async def on_message(message):
             await removechannel(message, msg)
             return
         if command == "schedule":
-            await schedule(message)
+            try:
+                if msg[1] != "":  # if there is anything afterwards
+                    await specificSchedule(message, msg)
+                    return
+            except IndexError:  # if there's no name
+                await schedule(message)
+                return
+        if command == "myschedule":
+            await myschedule(message)
             return
         if command == "members":
             await message.channel.send(MEMBER_LIST_STR)
@@ -96,6 +104,8 @@ async def on_message(message):
         if command == "list":
             await follow_list(message)
             return
+        # else
+        await message.channel.send('Unknown command')
 
     # translate
     transl_msg = translator(message)
@@ -103,6 +113,36 @@ async def on_message(message):
         return
     bot_msg = await message.channel.send(transl_msg)
     message_dict[message.id] = bot_msg
+
+
+async def specificSchedule(message, msg):
+    user_id = message.author.id
+    channel_id = message.channel.id
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    msg = ' '.join(msg[1:]).strip()
+    lower_member_list = [x.lower() for x in all_members_list]
+    try:
+        possibleMatch = next(
+            x for x in lower_member_list if msg.lower() in x)
+    except StopIteration:
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
+    indexOfMember = lower_member_list.index(possibleMatch)
+    if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
+        vtuber_channel = all_members_list[indexOfMember]
+        # create list of holo_schedule for specific member
+        scheduleList = []
+        for i in range(len(holo_schedule)):
+            if holo_schedule[i]["member"] == vtuber_channel:
+                scheduleList.append(holo_schedule[i])
+        if scheduleList == []:
+            await message.channel.send("**" + vtuber_channel + "** does not have any scheduled streams")
+            return
+        await embedMsg(message, scheduleList, len(scheduleList))
+
+    else:
+        await message.channel.send("Couldn't find the channel you specified.")
 
 
 @client.event
@@ -126,6 +166,7 @@ async def on_message_edit(before, after):
     # message object (from user)
     message = await channel.fetch_message(bot_msg.id)
     await message.edit(content=transl_msg)
+
 
 # exceptions for on_message
 
@@ -205,6 +246,7 @@ async def addchannel(message, msg):
     msg = ' '.join(msg[1:]).strip()
     if msg == '':
         return
+
     lower_member_list = [x.lower() for x in all_members_list]
     try:
         possibleMatch = next(
@@ -238,24 +280,6 @@ async def addchannel(message, msg):
                 await message.channel.send("Added " + vtuber_channel + " to your profile")
     else:
         await message.channel.send("Couldn't find the channel you specified.")
-
-
-async def follow_list(message):
-    with open('profiles.json', 'r') as f:
-        profiles = json.load(f)
-    user_id = message.author.id
-    channel_id = message.channel.id
-    follow_list = []
-    for keys, values in profiles.items():  # iterating through the big dict
-        for i in range(len(values)):  # iterating through the array
-            try:
-                if user_id in values[i].values() and channel_id in values[i].values():
-                    follow_list.append(keys)
-            except KeyError:
-                continue
-    follow_list = ', '.join(follow_list)
-    header_str = "**You are currently following: \n**"
-    await message.channel.send(header_str + follow_list)
 
 
 async def removechannel(message, msg):
@@ -325,7 +349,6 @@ async def get_holo_schedule():
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
     joinedList = (main.main(args, today_list))
-####
 
     # this appends
 
@@ -339,7 +362,6 @@ async def get_holo_schedule():
                 # only if live-pinged is true, update the new list for live-pinged to be true
             if holo_schedule[j].get("url") == joinedList[i].get("url") and holo_schedule[j]["live_pinged"] == True:
                 joinedList[i]["live_pinged"] = True
-            # holo_schedule.append(local_list[i])
 
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
@@ -347,7 +369,7 @@ async def get_holo_schedule():
     print('holo_schedule.json updated')
 
     await new_schedule()
-#####
+
 # pinging portion
 
 
@@ -442,23 +464,67 @@ def time_convert(holo_time, holo_date):  # takes an array in 'xx:xx' format
     return unix_time  # returns time in unix format
 
 
+async def follow_list(message):
+    with open('profiles.json', 'r') as f:
+        profiles = json.load(f)
+    user_id = message.author.id
+    channel_id = message.channel.id
+    follow_list = []
+    for keys, values in profiles.items():  # iterating through the big dict
+        for i in range(len(values)):  # iterating through the array
+            try:
+                if user_id in values[i].values() and channel_id in values[i].values():
+                    follow_list.append(keys)
+            except KeyError:
+                continue
+    follow_list = ', '.join(follow_list)
+    header_str = "**You are currently following: \n**"
+    await message.channel.send(header_str + follow_list)
+
+
+async def myschedule(message):
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    with open('profiles.json', 'r') as f:
+        profiles = json.load(f)
+    user_id = message.author.id
+    channel_id = message.channel.id
+    follow_list = []
+    for keys, values in profiles.items():
+        for i in range(len(values)):
+            try:
+                if user_id in values[i].values() and channel_id in values[i].values():
+                    follow_list.append(keys)
+            except KeyError:
+                continue
+    personalizedFollow = []
+    for i in range(len(holo_schedule)):
+        if holo_schedule[i]["member"] in follow_list:
+            personalizedFollow.append(holo_schedule[i])
+
+    await embedMsg(message, personalizedFollow, len(personalizedFollow))
+
+
 # gets holo_schedule discord-ready
 async def schedule(message):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
+    await embedMsg(message, holo_schedule, 10)
+
+
+async def embedMsg(message, hList, length):
     embedVar = discord.Embed(title="Schedule", color=0xfcc174)
-    for i in range(10):
-        holo_time = holo_schedule[i].get("time").split(':')
-        holo_date = holo_schedule[i].get("date")
+    for i in range(length):
+        holo_time = hList[i].get("time").split(':')
+        holo_date = hList[i].get("date")
         unix_time = time_convert(holo_time, holo_date)
         time_str = "<t:" + str(unix_time) + ">"
-        member_str = holo_schedule[i].get("member") + " "
-        title_str = holo_schedule[i].get("title")
-        url = holo_schedule[i].get("url")
+        member_str = hList[i].get("member") + " "
+        title_str = hList[i].get("title")
+        url = hList[i].get("url")
         embedVar.add_field(name='{}~ **{}:**'.format(
             time_str, member_str), value='{}'.format(url), inline=False)
     await message.channel.send(embed=embedVar)
-
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
 argparser = argparse.ArgumentParser(
