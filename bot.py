@@ -1,12 +1,12 @@
 # bot.py
 from array import typecodes
 import os
+from re import M
 import discord
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
 import json
 
-from platformdirs import user_log_dir
 from holo_schedule import main
 from discord.ext import commands, tasks
 import argparse
@@ -32,6 +32,7 @@ translate_client = translate.Client.from_service_account_json(
 
 
 all_members_list = []
+lower_member_list = []
 PREFIX = "$"
 holo_list = []
 
@@ -87,8 +88,13 @@ async def on_message(message):
             await removechannel(message, msg)
             return
         if command == "schedule":
-            await schedule(message)
-            return
+            try:
+                if msg[1] != "":  # if there is anything afterwards
+                    await specificSchedule(message, msg)
+                    return
+            except IndexError:  # if there's no name
+                await schedule(message)
+                return
         if command == "myschedule":
             await myschedule(message)
             return
@@ -107,6 +113,36 @@ async def on_message(message):
         return
     bot_msg = await message.channel.send(transl_msg)
     message_dict[message.id] = bot_msg
+
+
+async def specificSchedule(message, msg):
+    user_id = message.author.id
+    channel_id = message.channel.id
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    msg = ' '.join(msg[1:]).strip()
+    lower_member_list = [x.lower() for x in all_members_list]
+    try:
+        possibleMatch = next(
+            x for x in lower_member_list if msg.lower() in x)
+    except StopIteration:
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
+    indexOfMember = lower_member_list.index(possibleMatch)
+    if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
+        vtuber_channel = all_members_list[indexOfMember]
+        # create list of holo_schedule for specific member
+        scheduleList = []
+        for i in range(len(holo_schedule)):
+            if holo_schedule[i]["member"] == vtuber_channel:
+                scheduleList.append(holo_schedule[i])
+        if scheduleList == []:
+            await message.channel.send("**" + vtuber_channel + "** does not have any scheduled streams")
+            return
+        await embedMsg(message, scheduleList, len(scheduleList))
+
+    else:
+        await message.channel.send("Couldn't find the channel you specified.")
 
 
 @client.event
@@ -130,6 +166,7 @@ async def on_message_edit(before, after):
     # message object (from user)
     message = await channel.fetch_message(bot_msg.id)
     await message.edit(content=transl_msg)
+
 
 # exceptions for on_message
 
@@ -209,6 +246,7 @@ async def addchannel(message, msg):
     msg = ' '.join(msg[1:]).strip()
     if msg == '':
         return
+
     lower_member_list = [x.lower() for x in all_members_list]
     try:
         possibleMatch = next(
@@ -324,7 +362,6 @@ async def get_holo_schedule():
                 # only if live-pinged is true, update the new list for live-pinged to be true
             if holo_schedule[j].get("url") == joinedList[i].get("url") and holo_schedule[j]["live_pinged"] == True:
                 joinedList[i]["live_pinged"] = True
-
 
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
