@@ -1,10 +1,13 @@
 # bot.py
+from operator import index
 import os
 from re import M
 import discord
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
 import json
+from requests import JSONDecodeError
+import tweepy
 
 from holo_schedule import main
 from discord.ext import commands, tasks
@@ -23,41 +26,52 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 TRANSLATE = os.getenv('TRANSLATE_TOKEN')
+consumer_key = os.getenv('TWITTER_API')
+consumer_secret = os.getenv('TWITTER_API_SECRET')
+access_token = os.getenv('TWITTER_CLIENT')
+access_token_secret = os.getenv('TWITTER_CLIENT_SECRET')
 
 client = discord.Client()
 intents = discord.Intents.all()
 translate_client = translate.Client.from_service_account_json(
     'googleapi.json')
-
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = tweepy.API(auth)
 
 all_members_list = []
-lower_member_list = []
+with open('holo_members.txt', 'rb') as f:
+    file_content = f.readlines()[1:]  # Ignore first row
+    for member_block in file_content:
+        all_members_list.extend(
+            member_block.decode("utf-8").split(','))
+    # Delete break symbol
+    all_members_list[-1] = all_members_list[-1].replace('\n', '')
+    for i in range(len(all_members_list)):
+        all_members_list[i] = all_members_list[i].replace('\n', '')
+        all_members_list[i] = all_members_list[i].replace('\r', '')
+        all_members_list[i] = all_members_list[i].replace('*', '')
+        all_members_list[i] = all_members_list[i].replace(':', '')
+lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
+profileEmpty = False
 
 
 @client.event
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
-    #
+
+    profileEmpty = createProfile()
+    if profileEmpty == True:
+        return
+
     await firstScrape()
 
     get_holo_schedule.start()  # background task
     now_streaming.start()
-    with open('holo_members.txt', 'rb') as f:
-        file_content = f.readlines()[1:]  # Ignore first row
-        for member_block in file_content:
-            all_members_list.extend(
-                member_block.decode("utf-8").split(','))
-        # Delete break symbol
-        all_members_list[-1] = all_members_list[-1].replace('\n', '')
-        for i in range(len(all_members_list)):
-            all_members_list[i] = all_members_list[i].replace('\n', '')
-            all_members_list[i] = all_members_list[i].replace('\r', '')
-            all_members_list[i] = all_members_list[i].replace('*', '')
-            all_members_list[i] = all_members_list[i].replace(':', '')
-        f.close()
+
     print("もしもし")
 
 
@@ -78,33 +92,39 @@ async def on_message(message):
         msg = message.content[1:].split(' ')
         command = msg[0]
         if command == "help":
-            await message.channel.send('add, remove, schedule, members, list')
-            return
-        if command == "add":
+            await message.channel.send('add, remove, schedule, mySchedule, members, list, twitter')
+
+        elif command == "add":
             await addchannel(message, msg)
-            return
-        if command == "remove":
+
+        elif command == "remove":
             await removechannel(message, msg)
-            return
-        if command == "schedule":
+
+        elif command == "schedule":
             try:
                 if msg[1] != "":  # if there is anything afterwards
                     await specificSchedule(message, msg)
-                    return
+
             except IndexError:  # if there's no name
                 await schedule(message)
-                return
-        if command == "myschedule":
+
+        elif command == "myschedule":
             await myschedule(message)
-            return
-        if command == "members":
+
+        elif command == "members":
             await message.channel.send(MEMBER_LIST_STR)
-            return
-        if command == "list":
+
+        elif command == "list":
             await follow_list(message)
-            return
-        # else
-        await message.channel.send('Unknown command')
+
+        elif command == "json":
+            await message.channel.send(file=discord.File(msg[1]))
+
+        elif command == "twitter":
+            await tweetFollow(message, msg)
+
+        else:
+            await message.channel.send('Unknown command')
 
     # translate
     transl_msg = translator(message)
@@ -136,6 +156,51 @@ async def on_message_edit(before, after):
     message = await channel.fetch_message(bot_msg.id)
     await message.edit(content=transl_msg)
 
+
+# twitter follow
+async def tweetFollow(message, msg):
+    vtuber_channel = ' '.join(msg[1:]).strip()
+    try:
+        with open('twitter.json', 'r') as f:
+            twitter = json.load(f)
+    except json.decoder.JSONDecodeError:  # if empty
+        twitter = {}
+    if vtuber_channel in twitter:
+        twitter[vtuber_channel].append({
+            "channel_id": message.channel.id,
+            "user_id": message.author.id
+        })
+    else:
+        twitter[vtuber_channel] = [{
+            "channel_id": message.channel.id,
+            "user_id": message.author.id
+        }]
+    with open('twitter.json', 'w') as f:
+        json.dump(twitter, f, indent=4)
+
+
+@tasks.loop(seconds=30)
+async def tweetScrape():
+    with open('twitter.json', 'r') as f:
+        twitter = json.load(f)
+    
+    for keys, values in twitter.items():
+        tweets_list = api.user_timeline(user_id = keys, count=1 )
+        tweet = tweets_list[0]
+        print(dir(tweet))
+
+
+def createProfile():
+    try:
+        with open('profiles.json', 'r') as f:
+            profiles = json.load(f)
+    except json.decoder.JSONDecodeError:  # if empty
+        profiles = {}
+        for i in all_members_list:
+            profiles[i] = []
+        with open('profiles.json', 'w') as f:
+            json.dump(profiles, f, indent=4)
+        return True  # returns profileEmpty
 
 # exceptions for on_message
 
@@ -208,6 +273,14 @@ def translator(message):
 
 # message = message obj, msg = whole msg str, command = msg[1:]
 
+async def fuzzySearch(message, msg):
+    possibleMatch = next(
+        x for x in lower_member_list if msg.lower() in x)
+    # await message.channel.send("Couldn't find the channel you specified.")
+    indexOfMember = lower_member_list.index(possibleMatch)
+
+    return indexOfMember, possibleMatch  # indexOfMember
+
 
 async def addchannel(message, msg):
     user_id = message.author.id
@@ -216,28 +289,25 @@ async def addchannel(message, msg):
     if msg == '':
         return
 
-    lower_member_list = [x.lower() for x in all_members_list]
-    try:
-        possibleMatch = next(
-            x for x in lower_member_list if msg.lower() in x)
-    except StopIteration:
-        await message.channel.send("Couldn't find the channel you specified.")
-        return
-    indexOfMember = lower_member_list.index(possibleMatch)
+    indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
 
         vtuber_channel = all_members_list[indexOfMember]
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
+
+        user_info = {  # dict
+            "channel_id": channel_id,
+            "user_id": user_id
+        }
+
+        user_info_copy = user_info.copy()
+        user_list = profiles[vtuber_channel]
+        list_of_all_values = [
+            value for elem in user_list for value in elem.values()]
+
         with open('profiles.json', 'w') as g:
-            user_info = {  # dict
-                "channel_id": channel_id,
-                "user_id": user_id
-            }
-            user_info_copy = user_info.copy()
-            user_list = profiles[vtuber_channel]
-            list_of_all_values = [
-                value for elem in user_list for value in elem.values()]
             # check if User-id is already in
             if user_id in list_of_all_values and channel_id in list_of_all_values:
                 json.dump(profiles, g, indent=4)
@@ -253,28 +323,25 @@ async def addchannel(message, msg):
 
 async def removechannel(message, msg):
     user_id = message.author.id
+    channel_id = message.channel.id
     msg = ' '.join(msg[1:]).strip()
     if msg == '':
         return
-    lower_member_list = [x.lower() for x in all_members_list]
-    try:
-        possibleMatch = next(
-            x for x in lower_member_list if msg.lower() in x)
-    except StopIteration:
-        await message.channel.send('couldnt find channel u specified')
-        return
-    indexOfMember = lower_member_list.index(possibleMatch)
+
+    indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
         vtuber_channel = all_members_list[indexOfMember]
         with open('profiles.json', 'r') as f:
             profiles = json.load(f)
+
+        user_list = profiles[vtuber_channel]
+        user_index = next((index for (index, d) in enumerate(
+            user_list) if d["user_id"] == user_id), None)
+        list_of_all_values = [
+            value for elem in user_list for value in elem.values()]
         with open('profiles.json', 'w') as g:
-            user_list = profiles[vtuber_channel]
-            user_index = next((index for (index, d) in enumerate(
-                user_list) if d["user_id"] == user_id), None)
-            list_of_all_values = [
-                value for elem in user_list for value in elem.values()]
-            if user_id in list_of_all_values:
+            if user_id in list_of_all_values and channel_id in list_of_all_values:
                 del user_list[user_index]
                 profiles[vtuber_channel] = user_list
                 json.dump(profiles, g, indent=4)
@@ -301,7 +368,7 @@ async def firstScrape():
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
 
 
-@tasks.loop(seconds=15*60)
+@ tasks.loop(seconds=15*60)
 async def get_holo_schedule():
 
     # scraping portion
@@ -317,7 +384,7 @@ async def get_holo_schedule():
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
-    tomorrow_list = (main.main(args, today_list))
+    tomorrow_list = (main.main(args, holo_list=[]))
 
     # this appends
 
@@ -350,7 +417,6 @@ async def new_schedule():
 
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
-    # holo_schedule = holo_list
     with open('profiles.json', 'r') as g:
         profiles = json.load(g)
 
@@ -383,16 +449,16 @@ async def new_schedule():
                 else:
                     userDict[channel_id] = [user_id]
 
-            for ch, values in userDict.items():
+            for ch in userDict:
                 channel = client.get_channel(id=ch)  # channel obj
-                for i in range(len(values)):
-                    mention_str += "<@" + str(values[i]) + "> "
+                for i in range(len(userDict[ch])):
+                    mention_str += "<@" + str(userDict[ch][i]) + "> "
 
                 await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
     print('checking schedule')
 
 
-@tasks.loop(minutes=1)
+@ tasks.loop(minutes=1)
 async def now_streaming():
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
@@ -407,7 +473,7 @@ async def now_streaming():
         userDict = {}
         mention_str = ''
 
-        header_str = "**" + vtuber_channel + "** is now live! "
+        header_str = "**" + vtuber_channel + "** is now live! \n"
         title_str = holo_schedule[i].get("title")
         url = holo_schedule[i].get("url")
 
@@ -430,10 +496,10 @@ async def now_streaming():
                 else:
                     userDict[channel_id] = [user_id]
 
-            for ch, values in userDict.items():
+            for ch in userDict:
                 channel = client.get_channel(id=ch)  # channel obj
-                for i in range(len(values)):
-                    mention_str += "<@" + str(values[i]) + "> "
+                for i in range(len(userDict[ch])):
+                    mention_str += "<@" + str(userDict[ch][i]) + "> "
 
                 await channel.send(header_str + title_str + "\n=> " + url + "\n" + mention_str)
 
@@ -499,7 +565,7 @@ async def myschedule(message):
 async def schedule(message):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
-    await embedMsg(message, holo_schedule, 10)
+    await embedMsg(message, holo_schedule, int(10))
 
 
 async def specificSchedule(message, msg):
@@ -508,14 +574,8 @@ async def specificSchedule(message, msg):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     msg = ' '.join(msg[1:]).strip()
-    lower_member_list = [x.lower() for x in all_members_list]
-    try:
-        possibleMatch = next(
-            x for x in lower_member_list if msg.lower() in x)
-    except StopIteration:
-        await message.channel.send("Couldn't find the channel you specified.")
-        return
-    indexOfMember = lower_member_list.index(possibleMatch)
+
+    indexOfMember, possibleMatch = await fuzzySearch(message, msg)
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
         vtuber_channel = all_members_list[indexOfMember]
         # create list of holo_schedule for specific member
@@ -534,6 +594,11 @@ async def specificSchedule(message, msg):
 
 async def embedMsg(message, hList, length):
     embedVar = discord.Embed(title="Schedule", color=0xfcc174)
+    # what if there are x<10 things on the schedule
+    try:
+        hList[length]
+    except IndexError:
+        length = len(hList)
     for i in range(length):
         holo_time = hList[i].get("time").split(':')
         holo_date = hList[i].get("date")
@@ -551,6 +616,8 @@ argparser = argparse.ArgumentParser(
     formatter_class=argparse.RawTextHelpFormatter)
 argparser.add_argument(
     "--eng", action="store_true", default=False
+
+
 )
 argparser.add_argument(
     "--date", action="store_true", default=False
