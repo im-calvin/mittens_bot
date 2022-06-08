@@ -1,5 +1,4 @@
 # bot.py
-from array import typecodes
 import os
 from re import M
 import discord
@@ -113,36 +112,6 @@ async def on_message(message):
         return
     bot_msg = await message.channel.send(transl_msg)
     message_dict[message.id] = bot_msg
-
-
-async def specificSchedule(message, msg):
-    user_id = message.author.id
-    channel_id = message.channel.id
-    with open('holo_schedule.json', 'r') as f:
-        holo_schedule = json.load(f)
-    msg = ' '.join(msg[1:]).strip()
-    lower_member_list = [x.lower() for x in all_members_list]
-    try:
-        possibleMatch = next(
-            x for x in lower_member_list if msg.lower() in x)
-    except StopIteration:
-        await message.channel.send("Couldn't find the channel you specified.")
-        return
-    indexOfMember = lower_member_list.index(possibleMatch)
-    if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
-        vtuber_channel = all_members_list[indexOfMember]
-        # create list of holo_schedule for specific member
-        scheduleList = []
-        for i in range(len(holo_schedule)):
-            if holo_schedule[i]["member"] == vtuber_channel:
-                scheduleList.append(holo_schedule[i])
-        if scheduleList == []:
-            await message.channel.send("**" + vtuber_channel + "** does not have any scheduled streams")
-            return
-        await embedMsg(message, scheduleList, len(scheduleList))
-
-    else:
-        await message.channel.send("Couldn't find the channel you specified.")
 
 
 @client.event
@@ -358,7 +327,6 @@ async def get_holo_schedule():
         joinedList = today_list
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
-    print(joinedList)
     for i in range(len(joinedList)):
         for j in range(len(holo_schedule)):
             # if the new list entry is the exact same as the old list
@@ -385,32 +353,41 @@ async def new_schedule():
     # holo_schedule = holo_list
     with open('profiles.json', 'r') as g:
         profiles = json.load(g)
-        # list of dicts containing channel_id, user_id
+
+    # list of dicts containing channel_id, user_id
     for i in range(len(holo_schedule)):  # iterate through holo_schedule
         vtuber_channel = holo_schedule[i].get("member")
         user_list = profiles.get(vtuber_channel)
+        userDict = {}
+        mention_str = ''
+
+        holo_time = holo_schedule[i].get("time").split(':')
+        holo_date = holo_schedule[i].get("date")
+        unix_time = time_convert(holo_time, holo_date)
+        time_str = "<t:" + str(unix_time) + ">! \n"
+        header_str = "**" + vtuber_channel + "** scheduled a stream at "
+        title_str = holo_schedule[i].get("title")
+        url = holo_schedule[i].get("url")
+
         if holo_schedule[i].get("mentioned") == False:
             # set 'mentioned' to true
             holo_schedule[i]["mentioned"] = True
             with open('holo_schedule.json', 'w') as h:
                 json.dump(holo_schedule, h, indent=4)
             for j in range(len(user_list)):  # iterate through user_list
-                user_id = user_list[j].get("user_id")
-                channel_id = int(
-                    user_list[j].get("channel_id"))
-                channel = client.get_channel(id=channel_id)  # channel obj
+                user_id = (user_list[j].get("user_id"))
+                channel_id = int(user_list[j].get("channel_id"))
 
-                # message send
+                if channel_id in userDict:
+                    userDict[channel_id].append(user_id)
+                else:
+                    userDict[channel_id] = [user_id]
 
-                holo_time = holo_schedule[i].get("time").split(':')
-                holo_date = holo_schedule[i].get("date")
-                unix_time = time_convert(holo_time, holo_date)
+            for ch, values in userDict.items():
+                channel = client.get_channel(id=ch)  # channel obj
+                for i in range(len(values)):
+                    mention_str += "<@" + str(values[i]) + "> "
 
-                time_str = "<t:" + str(unix_time) + ">! \n"
-                header_str = vtuber_channel + " scheduled a stream at "
-                mention_str = "<@" + str(user_id) + ">\n"
-                title_str = holo_schedule[i].get("title")
-                url = holo_schedule[i].get("url")
                 await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
     print('checking schedule')
 
@@ -427,30 +404,38 @@ async def now_streaming():
     for i in range(len(holo_schedule)):
         vtuber_channel = holo_schedule[i].get("member")
         user_list = profiles.get(vtuber_channel)
-        for j in range((len(user_list))):
-            user_id = user_list[j].get("user_id")
-            channel_id = int(
-                user_list[j].get("channel_id"))
-            channel = client.get_channel(
-                id=channel_id)  # channel obj
+        userDict = {}
+        mention_str = ''
 
-            # message send
-            holo_time = holo_schedule[i].get("time").split(':')
-            holo_date = holo_schedule[i].get("date")
-            # unix time for each schedule
-            unix_time = time_convert(holo_time, holo_date)
-            # if the time is very close, then the scheduled time - 70 seconds should be less than now_time
-            if unix_time < now_unix and holo_schedule[i].get("live_pinged") == False:
-                holo_schedule[i]["live_pinged"] = True
-                with open('holo_schedule.json', 'w') as f:
-                    json.dump(holo_schedule, f, indent=4)
-                # time_str = "<t:" + str(unix_time) + ">! \n"
-                header_str = vtuber_channel + " is now live! "
-                mention_str = "<@" + str(user_id) + ">\n"
-                title_str = holo_schedule[i].get("title")
-                url = holo_schedule[i].get("url")
+        header_str = "**" + vtuber_channel + "** is now live! "
+        title_str = holo_schedule[i].get("title")
+        url = holo_schedule[i].get("url")
+
+        holo_time = holo_schedule[i].get("time").split(':')
+        holo_date = holo_schedule[i].get("date")
+        # unix time for each schedule
+        unix_time = time_convert(holo_time, holo_date)
+        if unix_time < now_unix and holo_schedule[i].get("live_pinged") == False:
+            holo_schedule[i]["live_pinged"] = True
+            with open('holo_schedule.json', 'w') as f:
+                json.dump(holo_schedule, f, indent=4)
+
+            for j in range((len(user_list))):
+                user_id = user_list[j].get("user_id")
+                channel_id = int(
+                    user_list[j].get("channel_id"))
+
+                if channel_id in userDict:
+                    userDict[channel_id].append(user_id)
+                else:
+                    userDict[channel_id] = [user_id]
+
+            for ch, values in userDict.items():
+                channel = client.get_channel(id=ch)  # channel obj
+                for i in range(len(values)):
+                    mention_str += "<@" + str(values[i]) + "> "
+
                 await channel.send(header_str + title_str + "\n=> " + url + "\n" + mention_str)
-
 
 # converts from jp to unix time
 
@@ -515,6 +500,36 @@ async def schedule(message):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     await embedMsg(message, holo_schedule, 10)
+
+
+async def specificSchedule(message, msg):
+    user_id = message.author.id
+    channel_id = message.channel.id
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    msg = ' '.join(msg[1:]).strip()
+    lower_member_list = [x.lower() for x in all_members_list]
+    try:
+        possibleMatch = next(
+            x for x in lower_member_list if msg.lower() in x)
+    except StopIteration:
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
+    indexOfMember = lower_member_list.index(possibleMatch)
+    if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
+        vtuber_channel = all_members_list[indexOfMember]
+        # create list of holo_schedule for specific member
+        scheduleList = []
+        for i in range(len(holo_schedule)):
+            if holo_schedule[i]["member"] == vtuber_channel:
+                scheduleList.append(holo_schedule[i])
+        if scheduleList == []:
+            await message.channel.send("**" + vtuber_channel + "** does not have any scheduled streams")
+            return
+        await embedMsg(message, scheduleList, len(scheduleList))
+
+    else:
+        await message.channel.send("Couldn't find the channel you specified.")
 
 
 async def embedMsg(message, hList, length):
