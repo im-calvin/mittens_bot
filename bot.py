@@ -28,15 +28,18 @@ GUILD = os.getenv('DISCORD_GUILD')
 TRANSLATE = os.getenv('TRANSLATE_TOKEN')
 consumer_key = os.getenv('TWITTER_API')
 consumer_secret = os.getenv('TWITTER_API_SECRET')
-access_token = os.getenv('TWITTER_CLIENT')
-access_token_secret = os.getenv('TWITTER_CLIENT_SECRET')
+access_token = os.getenv('TWITTER_ACCESS_TOKEN')
+access_token_secret = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
+bearer_token = os.getenv('BEARER_TOKEN')
+
 
 client = discord.Client()
 intents = discord.Intents.all()
+TWClient = tweepy.Client(bearer_token)
 translate_client = translate.Client.from_service_account_json(
     'googleapi.json')
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
+auth = tweepy.OAuth1UserHandler(
+    consumer_key, consumer_secret, access_token, access_token_secret)
 api = tweepy.API(auth)
 
 all_members_list = []
@@ -71,6 +74,7 @@ async def on_ready():
 
     get_holo_schedule.start()  # background task
     now_streaming.start()
+    tweetScrape.start()
 
     print("もしもし")
 
@@ -165,13 +169,17 @@ async def tweetFollow(message, msg):
             twitter = json.load(f)
     except json.decoder.JSONDecodeError:  # if empty
         twitter = {}
-    if vtuber_channel in twitter:
-        twitter[vtuber_channel].append({
+
+    response = TWClient.get_user(username=vtuber_channel)
+    id = response.data.id
+
+    if id in twitter:
+        twitter[id].append({
             "channel_id": message.channel.id,
             "user_id": message.author.id
         })
     else:
-        twitter[vtuber_channel] = [{
+        twitter[id] = [{
             "channel_id": message.channel.id,
             "user_id": message.author.id
         }]
@@ -181,13 +189,22 @@ async def tweetFollow(message, msg):
 
 @tasks.loop(seconds=30)
 async def tweetScrape():
-    with open('twitter.json', 'r') as f:
-        twitter = json.load(f)
-    
+    try:
+        with open('twitter.json', 'r') as f:
+            twitter = json.load(f)
+    except json.decoder.JSONDecodeError:  # if twitter.json is empty
+        return
+    now = datetime.now(timezone('UTC'))
+    twitterUserList = []
+    twitterGetUser = {}
+    tweetTime = []
     for keys, values in twitter.items():
-        tweets_list = api.user_timeline(user_id = keys, count=1 )
-        tweet = tweets_list[0]
-        print(dir(tweet))
+        tweets_list = api.user_timeline(user_id=keys, count=20)
+
+    for i in range(20):
+        tweetTime.append(tweets_list.created_at)
+
+    print(tweet.created_at)
 
 
 def createProfile():
