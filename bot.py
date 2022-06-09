@@ -125,10 +125,14 @@ async def on_message(message):
             await message.channel.send(file=discord.File(msg[1]))
 
         elif command == "twadd":
-            await tweetFollow(message, msg)
+            await tweetAdd(message, msg)
 
         elif command == "twlist":
             await follow_list(message, 'twitter.json', 'twitter')
+
+        elif command == "twremove":
+            await tweetRemove(message, msg)
+
         else:
             await message.channel.send('Unknown command')
 
@@ -164,7 +168,7 @@ async def on_message_edit(before, after):
 
 
 # twitter follow
-async def tweetFollow(message, msg):
+async def tweetAdd(message, msg):
     vtuber_channel = ' '.join(msg[1:]).strip()
     if vtuber_channel == '':
         return
@@ -313,8 +317,11 @@ def translator(message):
 # message = message obj, msg = whole msg str, command = msg[1:]
 
 async def fuzzySearch(message, msg):
-    possibleMatch = next(
-        x for x in lower_member_list if msg.lower() in x)
+    try:
+        possibleMatch = next(
+            x for x in lower_member_list if msg.lower() in x)
+    except StopIteration:
+        return "bruh what", None
     # await message.channel.send("Couldn't find the channel you specified.")
     indexOfMember = lower_member_list.index(possibleMatch)
 
@@ -338,41 +345,53 @@ async def duplicate(message, fileName, key, purpose):
         profiles[key] = []
         user_list = []
 
+    user_index = next((index for (index, d) in enumerate(
+        user_list) if d["user_id"] == user_id and d["channel_id"] == channel_id), None)
     list_of_all_values = [
         value for elem in user_list for value in elem.values()]
-    user_index = next((index for (index, d) in enumerate(
-        user_list) if d["user_id"] == user_id), None)
 
     with open(fileName, 'w') as g:
         # check if User-id is already in
+        # already exists in file
+        # for i in range(len(user_list)):
         if user_id in list_of_all_values and channel_id in list_of_all_values:  # already exists in file
+            # if user_list[i].values() == [channel_id, user_id]:
+            if purpose == 'remove':
+                del user_list[user_index]
+                profiles[key] = user_list
+
+                json.dump(profiles, g, indent=4)
+                if fileName == 'twitter.json':
+                    try:
+                        key = api.get_user(user_id=key).name
+                    except tweepy.errors:
+                        pass
+                await message.channel.send("Removed **" + key + "** from your profile")
+
             if fileName == 'twitter.json':
                 key = api.get_user(user_id=key).name
             if purpose == 'add':
                 json.dump(profiles, g, indent=4)
                 await message.channel.send("I appreciate your enthusiasm but you can't follow **" + key + "** twice. \nTry making another account?")
-            if purpose == 'remove':
-                del user_list[user_index]
-                profiles[key] = user_list
-                json.dump(profiles, g, indent=4)
-                await message.channel.send("Removed **" + key + "** from your profile")
         else:
             if purpose == 'remove':
                 json.dump(profiles, g, indent=4)
+                if fileName == 'twitter.json':
+                    key = api.get_user(user_id=key).name
                 await message.channel.send("Unable to remove **" + key + "** from your profile")
                 return
+
             if key in profiles:
                 profiles[key].append({
-                    "channel_id": message.channel.id,
-                    "user_id": message.author.id
+                    "channel_id": channel_id,
+                    "user_id": user_id
                 })
             else:
                 profiles[key] = [{
-                    "channel_id": message.channel.id,
-                    "user_id": message.author.id
+                    "channel_id": channel_id,
+                    "user_id": user_id
                 }]
             json.dump(profiles, g, indent=4)
-
             if fileName == 'twitter.json':
                 key = api.get_user(user_id=key).name
             await message.channel.send("Added **" + key + "** to your profile")
@@ -386,6 +405,9 @@ async def addchannel(message, msg):
         return
 
     indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    if indexOfMember == "bruh what":
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
 
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
 
@@ -398,13 +420,14 @@ async def addchannel(message, msg):
 
 
 async def removechannel(message, msg):
-    user_id = message.author.id
-    channel_id = message.channel.id
     msg = ' '.join(msg[1:]).strip()
     if msg == '':
         return
 
     indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    if indexOfMember == "bruh what":
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
 
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
         vtuber_channel = all_members_list[indexOfMember]
