@@ -345,17 +345,17 @@ async def duplicate(message, fileName, key, purpose):
         profiles[key] = []
         user_list = []
 
+    list_of_all_values = []
+
     user_index = next((index for (index, d) in enumerate(
         user_list) if d["user_id"] == user_id and d["channel_id"] == channel_id), None)
-    list_of_all_values = [
-        value for elem in user_list for value in elem.values()]
+    for elem in user_list:
+        list_of_all_values.append(list(elem.values()))
 
     with open(fileName, 'w') as g:
-        # check if User-id is already in
-        # already exists in file
-        # for i in range(len(user_list)):
-        if user_id in list_of_all_values and channel_id in list_of_all_values:  # already exists in file
-            # if user_list[i].values() == [channel_id, user_id]:
+
+        if [channel_id, user_id] in list_of_all_values:  # already exists in file
+
             if purpose == 'remove':
                 del user_list[user_index]
                 profiles[key] = user_list
@@ -444,7 +444,7 @@ async def firstScrape():
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list)
-    print('firstScrape done!')
+    # print('firstScrape done!')
     await asyncio.sleep(1.0)
     await new_schedule()
 
@@ -489,7 +489,7 @@ async def get_holo_schedule():
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
 
-    print('holo_schedule.json updated')
+    # print('holo_schedule.json updated')
 
     await new_schedule()
 
@@ -541,7 +541,7 @@ async def new_schedule():
                     mention_str += "<@" + str(userDict[ch][i]) + "> "
 
                 await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
-    print('checking schedule')
+    # print('checking schedule')
 
 
 @ tasks.loop(minutes=1)
