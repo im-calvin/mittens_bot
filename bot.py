@@ -364,12 +364,15 @@ async def duplicate(message, fileName, key, purpose):
                 if fileName == 'twitter.json':
                     try:
                         key = api.get_user(user_id=key).name
-                    except tweepy.errors:
+                    except tweepy.errors.NotFound:
                         pass
                 await message.channel.send("Removed **" + key + "** from your profile")
 
             if fileName == 'twitter.json':
-                key = api.get_user(user_id=key).name
+                try:
+                    key = api.get_user(user_id=key).name
+                except tweepy.errors.NotFound:
+                    pass
             if purpose == 'add':
                 json.dump(profiles, g, indent=4)
                 await message.channel.send("I appreciate your enthusiasm but you can't follow **" + key + "** twice. \nTry making another account?")
