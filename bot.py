@@ -119,7 +119,7 @@ async def on_message(message):
             await message.channel.send(MEMBER_LIST_STR)
 
         elif command == "list":
-            await follow_list(message)
+            await follow_list(message, 'profiles.json', 'x')
 
         elif command == "json":
             await message.channel.send(file=discord.File(msg[1]))
@@ -127,6 +127,8 @@ async def on_message(message):
         elif command == "twitter":
             await tweetFollow(message, msg)
 
+        elif command == "twitterlist":
+            await follow_list(message, 'twitter.json', 'twitter')
         else:
             await message.channel.send('Unknown command')
 
@@ -207,7 +209,6 @@ async def tweetScrape():
         tweetData = str(TWClient.get_tweet(
             id=tweetID, expansions='attachments.media_keys').data)
         username = api.get_user(user_id=keys).name
-        print(username)
         header_str = "**" + username + "** just tweeted! \n"
 
         if now < tweetTime:  # should be <
@@ -567,12 +568,18 @@ def time_convert(holo_time, holo_date):  # takes an array in 'xx:xx' format
     return unix_time  # returns time in unix format
 
 
-async def follow_list(message):
-    with open('profiles.json', 'r') as f:
+async def follow_list(message, fileName, twBool):
+    with open(fileName, 'r') as f:
         profiles = json.load(f)
+    if twBool == "twitter":
+        for keys in list(profiles):
+            name = api.get_user(user_id=keys).name
+            profiles[name] = profiles.pop(keys)
+
     user_id = message.author.id
     channel_id = message.channel.id
     follow_list = []
+
     for keys, values in profiles.items():  # iterating through the big dict
         for i in range(len(values)):  # iterating through the array
             try:
