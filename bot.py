@@ -28,15 +28,18 @@ GUILD = os.getenv('DISCORD_GUILD')
 TRANSLATE = os.getenv('TRANSLATE_TOKEN')
 consumer_key = os.getenv('TWITTER_API')
 consumer_secret = os.getenv('TWITTER_API_SECRET')
-access_token = os.getenv('TWITTER_CLIENT')
-access_token_secret = os.getenv('TWITTER_CLIENT_SECRET')
+access_token = os.getenv('TWITTER_ACCESS_TOKEN')
+access_token_secret = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
+bearer_token = os.getenv('BEARER_TOKEN')
+
 
 client = discord.Client()
 intents = discord.Intents.all()
+TWClient = tweepy.Client(bearer_token)
 translate_client = translate.Client.from_service_account_json(
     'googleapi.json')
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
+auth = tweepy.OAuth1UserHandler(
+    consumer_key, consumer_secret, access_token, access_token_secret)
 api = tweepy.API(auth)
 
 all_members_list = []
@@ -71,6 +74,7 @@ async def on_ready():
 
     get_holo_schedule.start()  # background task
     now_streaming.start()
+    tweetScrape.start()
 
     print("もしもし")
 
@@ -92,7 +96,7 @@ async def on_message(message):
         msg = message.content[1:].split(' ')
         command = msg[0]
         if command == "help":
-            await message.channel.send('add, remove, schedule, mySchedule, members, list, twitter')
+            await message.channel.send('add, remove, schedule, mySchedule, members, list, twadd, twremove, twlist')
 
         elif command == "add":
             await addchannel(message, msg)
@@ -115,13 +119,19 @@ async def on_message(message):
             await message.channel.send(MEMBER_LIST_STR)
 
         elif command == "list":
-            await follow_list(message)
+            await follow_list(message, 'profiles.json', 'x')
 
         elif command == "json":
             await message.channel.send(file=discord.File(msg[1]))
 
-        elif command == "twitter":
-            await tweetFollow(message, msg)
+        elif command == "twadd":
+            await tweetAdd(message, msg)
+
+        elif command == "twlist":
+            await follow_list(message, 'twitter.json', 'twitter')
+
+        elif command == "twremove":
+            await tweetRemove(message, msg)
 
         else:
             await message.channel.send('Unknown command')
@@ -158,36 +168,69 @@ async def on_message_edit(before, after):
 
 
 # twitter follow
-async def tweetFollow(message, msg):
+async def tweetAdd(message, msg):
     vtuber_channel = ' '.join(msg[1:]).strip()
-    try:
-        with open('twitter.json', 'r') as f:
-            twitter = json.load(f)
-    except json.decoder.JSONDecodeError:  # if empty
-        twitter = {}
-    if vtuber_channel in twitter:
-        twitter[vtuber_channel].append({
-            "channel_id": message.channel.id,
-            "user_id": message.author.id
-        })
-    else:
-        twitter[vtuber_channel] = [{
-            "channel_id": message.channel.id,
-            "user_id": message.author.id
-        }]
-    with open('twitter.json', 'w') as f:
-        json.dump(twitter, f, indent=4)
+    if vtuber_channel == '':
+        return
+
+    response = TWClient.get_user(username=vtuber_channel)
+    id = response.data.id
+
+    await duplicate(message, 'twitter.json', id, 'add')
+
+
+async def tweetRemove(message, msg):
+    vtuber_channel = ' '.join(msg[1:]).strip()
+    if vtuber_channel == '':
+        return
+
+    response = TWClient.get_user(username=vtuber_channel)
+    id = response.data.id
+
+    await duplicate(message, 'twitter.json', id, 'remove')
 
 
 @tasks.loop(seconds=30)
 async def tweetScrape():
-    with open('twitter.json', 'r') as f:
-        twitter = json.load(f)
-    
-    for keys, values in twitter.items():
-        tweets_list = api.user_timeline(user_id = keys, count=1 )
-        tweet = tweets_list[0]
-        print(dir(tweet))
+    try:
+        with open('twitter.json', 'r') as f:
+            twitter = json.load(f)
+    except json.decoder.JSONDecodeError:  # if twitter.json is empty
+        return
+    now = datetime.now(timezone('UTC'))
+
+    tweetTime = []
+    mention_str = ''
+    userDict = {}
+
+    for keys, values in twitter.items():  # iterating over the json file
+        tweets_list = api.user_timeline(user_id=keys, count=1)
+        tweetTime = tweets_list[0].created_at
+        tweetID = tweets_list[0].id
+        tweetData = str(TWClient.get_tweet(
+            id=tweetID).data)
+        username = api.get_user(user_id=keys).name
+        header_str = "**" + username + "** just tweeted! \n"
+
+        if now < tweetTime:  # should be <
+
+            # sending to multiple channels
+            try:
+                for j in range(len(values)):  # iterate through user_list
+                    user_id = (values[j].get("user_id"))
+                    channel_id = int(values[j].get("channel_id"))
+
+                    if channel_id in userDict:
+                        userDict[channel_id].append(user_id)
+                    else:
+                        userDict[channel_id] = [user_id]
+            except TypeError:  # if arr = [], continue
+                continue
+            for ch in userDict:
+                channel = client.get_channel(id=ch)
+                for i in range(len(userDict[ch])):
+                    mention_str += "<@" + str(userDict[ch][i]) + "> "
+                await channel.send(header_str + tweetData + '\n' + mention_str)
 
 
 def createProfile():
@@ -200,7 +243,7 @@ def createProfile():
             profiles[i] = []
         with open('profiles.json', 'w') as f:
             json.dump(profiles, f, indent=4)
-        return True  # returns profileEmpty
+        return True  # returns profileEmpty = True
 
 # exceptions for on_message
 
@@ -274,12 +317,87 @@ def translator(message):
 # message = message obj, msg = whole msg str, command = msg[1:]
 
 async def fuzzySearch(message, msg):
-    possibleMatch = next(
-        x for x in lower_member_list if msg.lower() in x)
+    try:
+        possibleMatch = next(
+            x for x in lower_member_list if msg.lower() in x)
+    except StopIteration:
+        return "bruh what", None
     # await message.channel.send("Couldn't find the channel you specified.")
     indexOfMember = lower_member_list.index(possibleMatch)
 
     return indexOfMember, possibleMatch  # indexOfMember
+
+
+async def duplicate(message, fileName, key, purpose):
+    user_id = message.author.id
+    channel_id = message.channel.id
+    try:
+        with open(fileName, 'r') as f:
+            profiles = json.load(f)
+    except json.decoder.JSONDecodeError:  # if empty
+        profiles = {}
+
+    key = str(key)
+
+    try:
+        user_list = profiles[key]
+    except KeyError:  # nobody is following 'key'
+        profiles[key] = []
+        user_list = []
+
+    list_of_all_values = []
+
+    user_index = next((index for (index, d) in enumerate(
+        user_list) if d["user_id"] == user_id and d["channel_id"] == channel_id), None)
+    for elem in user_list:
+        list_of_all_values.append(list(elem.values()))
+
+    with open(fileName, 'w') as g:
+
+        if [channel_id, user_id] in list_of_all_values:  # already exists in file
+
+            if purpose == 'remove':
+                del user_list[user_index]
+                profiles[key] = user_list
+
+                json.dump(profiles, g, indent=4)
+                if fileName == 'twitter.json':
+                    try:
+                        key = api.get_user(user_id=key).name
+                    except tweepy.errors.NotFound:
+                        pass
+                await message.channel.send("Removed **" + key + "** from your profile")
+
+            if fileName == 'twitter.json':
+                try:
+                    key = api.get_user(user_id=key).name
+                except tweepy.errors.NotFound:
+                    pass
+            if purpose == 'add':
+                json.dump(profiles, g, indent=4)
+                await message.channel.send("I appreciate your enthusiasm but you can't follow **" + key + "** twice. \nTry making another account?")
+        else:
+            if purpose == 'remove':
+                json.dump(profiles, g, indent=4)
+                if fileName == 'twitter.json':
+                    key = api.get_user(user_id=key).name
+                await message.channel.send("Unable to remove **" + key + "** from your profile")
+                return
+
+            if key in profiles:
+                profiles[key].append({
+                    "channel_id": channel_id,
+                    "user_id": user_id
+                })
+            else:
+                profiles[key] = [{
+                    "channel_id": channel_id,
+                    "user_id": user_id
+                }]
+            json.dump(profiles, g, indent=4)
+            if fileName == 'twitter.json':
+                key = api.get_user(user_id=key).name
+            await message.channel.send("Added **" + key + "** to your profile")
 
 
 async def addchannel(message, msg):
@@ -290,67 +408,35 @@ async def addchannel(message, msg):
         return
 
     indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    if indexOfMember == "bruh what":
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
 
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
 
         vtuber_channel = all_members_list[indexOfMember]
-        with open('profiles.json', 'r') as f:
-            profiles = json.load(f)
 
-        user_info = {  # dict
-            "channel_id": channel_id,
-            "user_id": user_id
-        }
+        await duplicate(message, 'profiles.json', vtuber_channel, 'add')
 
-        user_info_copy = user_info.copy()
-        user_list = profiles[vtuber_channel]
-        list_of_all_values = [
-            value for elem in user_list for value in elem.values()]
-
-        with open('profiles.json', 'w') as g:
-            # check if User-id is already in
-            if user_id in list_of_all_values and channel_id in list_of_all_values:
-                json.dump(profiles, g, indent=4)
-                await message.channel.send("I appreciate your enthusiasm but you can't follow " + vtuber_channel + " twice. \nTry making another account?")
-            else:
-                user_list.append(user_info_copy)  # list of user-info
-                profiles[vtuber_channel] = user_list
-                json.dump(profiles, g, indent=4)
-                await message.channel.send("Added " + vtuber_channel + " to your profile")
     else:
         await message.channel.send("Couldn't find the channel you specified.")
 
 
 async def removechannel(message, msg):
-    user_id = message.author.id
-    channel_id = message.channel.id
     msg = ' '.join(msg[1:]).strip()
     if msg == '':
         return
 
     indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    if indexOfMember == "bruh what":
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
 
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
         vtuber_channel = all_members_list[indexOfMember]
-        with open('profiles.json', 'r') as f:
-            profiles = json.load(f)
-
-        user_list = profiles[vtuber_channel]
-        user_index = next((index for (index, d) in enumerate(
-            user_list) if d["user_id"] == user_id), None)
-        list_of_all_values = [
-            value for elem in user_list for value in elem.values()]
-        with open('profiles.json', 'w') as g:
-            if user_id in list_of_all_values and channel_id in list_of_all_values:
-                del user_list[user_index]
-                profiles[vtuber_channel] = user_list
-                json.dump(profiles, g, indent=4)
-                await message.channel.send("Removed " + vtuber_channel + " from your profile")
-            else:
-                json.dump(profiles, g, indent=4)
-                await message.channel.send("Unable to remove " + vtuber_channel + " from your profile")
+        await duplicate(message, 'profiles.json', vtuber_channel, 'remove')
     else:
-        await message.channel.send("Channel not found.")
+        await message.channel.send("Couldn't find the channel you specified.")
 
 # runs the scraper for holo-schedule
 
@@ -361,7 +447,7 @@ async def firstScrape():
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list)
-    print('firstScrape done!')
+    # print('firstScrape done!')
     await asyncio.sleep(1.0)
     await new_schedule()
 
@@ -406,7 +492,7 @@ async def get_holo_schedule():
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
 
-    print('holo_schedule.json updated')
+    # print('holo_schedule.json updated')
 
     await new_schedule()
 
@@ -440,14 +526,17 @@ async def new_schedule():
             holo_schedule[i]["mentioned"] = True
             with open('holo_schedule.json', 'w') as h:
                 json.dump(holo_schedule, h, indent=4)
-            for j in range(len(user_list)):  # iterate through user_list
-                user_id = (user_list[j].get("user_id"))
-                channel_id = int(user_list[j].get("channel_id"))
+            try:
+                for j in range(len(user_list)):  # iterate through user_list
+                    user_id = (user_list[j].get("user_id"))
+                    channel_id = int(user_list[j].get("channel_id"))
 
-                if channel_id in userDict:
-                    userDict[channel_id].append(user_id)
-                else:
-                    userDict[channel_id] = [user_id]
+                    if channel_id in userDict:
+                        userDict[channel_id].append(user_id)
+                    else:
+                        userDict[channel_id] = [user_id]
+            except TypeError:  # if arr = [], continue
+                continue
 
             for ch in userDict:
                 channel = client.get_channel(id=ch)  # channel obj
@@ -455,7 +544,7 @@ async def new_schedule():
                     mention_str += "<@" + str(userDict[ch][i]) + "> "
 
                 await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
-    print('checking schedule')
+    # print('checking schedule')
 
 
 @ tasks.loop(minutes=1)
@@ -486,15 +575,18 @@ async def now_streaming():
             with open('holo_schedule.json', 'w') as f:
                 json.dump(holo_schedule, f, indent=4)
 
-            for j in range((len(user_list))):
-                user_id = user_list[j].get("user_id")
-                channel_id = int(
-                    user_list[j].get("channel_id"))
+            try:
+                for j in range((len(user_list))):
+                    user_id = user_list[j].get("user_id")
+                    channel_id = int(
+                        user_list[j].get("channel_id"))
 
-                if channel_id in userDict:
-                    userDict[channel_id].append(user_id)
-                else:
-                    userDict[channel_id] = [user_id]
+                    if channel_id in userDict:
+                        userDict[channel_id].append(user_id)
+                    else:
+                        userDict[channel_id] = [user_id]
+            except TypeError:  # see above
+                continue
 
             for ch in userDict:
                 channel = client.get_channel(id=ch)  # channel obj
@@ -520,12 +612,18 @@ def time_convert(holo_time, holo_date):  # takes an array in 'xx:xx' format
     return unix_time  # returns time in unix format
 
 
-async def follow_list(message):
-    with open('profiles.json', 'r') as f:
+async def follow_list(message, fileName, twBool):
+    with open(fileName, 'r') as f:
         profiles = json.load(f)
+    if twBool == "twitter":
+        for keys in list(profiles):
+            name = api.get_user(user_id=keys).name
+            profiles[name] = profiles.pop(keys)
+
     user_id = message.author.id
     channel_id = message.channel.id
     follow_list = []
+
     for keys, values in profiles.items():  # iterating through the big dict
         for i in range(len(values)):  # iterating through the array
             try:
