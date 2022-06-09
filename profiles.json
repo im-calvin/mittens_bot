@@ -1,15 +1,10 @@
 {
-  "hololive": [],
+  "Hololive": [],
   "Tokino Sora": [],
   "Roboco-san": [],
   "Sakura Miko": [],
   "AZKi": [],
-  "Shirakami Fubuki": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 535296448233996288
-    }
-  ],
+  "Shirakami Fubuki": [],
   "Natsuiro Matsuri": [],
   "Yozora Mel": [],
   "Akai Haato": [],
@@ -21,12 +16,7 @@
   "Murasaki Shion": [],
   "Oozora Subaru": [],
   "Ookami Mio": [],
-  "Nekomata Okayu": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    }
-  ],
+  "Nekomata Okayu": [],
   "Inugami Korone": [],
   "Shiranui Flare": [],
   "Shirogane Noel": [],
@@ -47,7 +37,7 @@
   "Hakui Koyori": [],
   "Sakamata Chloe": [],
   "Kazama Iroha": [],
-  "holostars": [],
+  "Holostars": [],
   "Hanasaki Miyabi": [],
   "Kanade Izuru": [],
   "Arurandeisu": [],
@@ -61,6 +51,7 @@
   "Utsugi Uyu": [],
   "Hizaki Gamma": [],
   "Minase Rio": [],
+  "HoloID": [],
   "Ayunda Risu": [],
   "Moona Hoshinova": [],
   "Airani Iofifteen": [],
@@ -70,62 +61,20 @@
   "Vestia Zeta": [],
   "Kaela Kovalskia": [],
   "Kobo Kanaeru": [],
-  "holoID": [],
+  "HoloEN": [],
   "Mori Calliope": [
     {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 445609667431759874,
+      "channel_id": 948120054283796480,
       "user_id": 182310565333565440
     }
   ],
-  "Takanashi Kiara": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    }
-  ],
-  "Ninomae Ina'nis": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    },
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    }
-  ],
-  "Gawr Gura": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    },
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    }
-  ],
-  "Watson Amelia": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 277908415857295361
-    }
-  ],
-  "holoEN": [],
+  "Takanashi Kiara": [],
+  "Ninomae Ina'nis": [],
+  "Gawr Gura": [],
+  "Watson Amelia": [],
   "IRyS": [],
   "Tsukumo Sana": [],
-  "Ceres Fauna": [
-    {
-      "channel_id": 445609667431759874,
-      "user_id": 182310565333565440
-    }
-  ],
+  "Ceres Fauna": [],
   "Ouro Kronii": [],
   "Nanashi Mumei": [],
   "Hakos Baelz": []

@@ -197,7 +197,7 @@ async def tweetScrape():
             twitter = json.load(f)
     except json.decoder.JSONDecodeError:  # if twitter.json is empty
         return
-    now = datetime.now(timezone('UTC'))
+    now = datetime.now(timezone('UTC')) - timedelta(seconds=30)
 
     tweetTime = []
     mention_str = ''
@@ -205,7 +205,11 @@ async def tweetScrape():
 
     for keys, values in twitter.items():  # iterating over the json file
         tweets_list = api.user_timeline(user_id=keys, count=1)
-        tweetTime = tweets_list[0].created_at
+        try:
+            tweetTime = tweets_list[0].created_at
+        except IndexError:  # if twitter acc has 0 msgs
+            return
+
         tweetID = tweets_list[0].id
         tweetData = str(TWClient.get_tweet(
             id=tweetID).data)
