@@ -195,16 +195,40 @@ async def tweetScrape():
     except json.decoder.JSONDecodeError:  # if twitter.json is empty
         return
     now = datetime.now(timezone('UTC'))
-    twitterUserList = []
-    twitterGetUser = {}
+
     tweetTime = []
-    for keys, values in twitter.items():
-        tweets_list = api.user_timeline(user_id=keys, count=20)
+    mention_str = ''
+    userDict = {}
 
-    for i in range(20):
-        tweetTime.append(tweets_list.created_at)
+    for keys, values in twitter.items():  # iterating over the json file
+        tweets_list = api.user_timeline(user_id=keys, count=1)
+        tweetTime = (tweets_list[0].created_at)
+        tweetID = tweets_list[0].id
+        tweetData = str(TWClient.get_tweet(
+            id=tweetID, expansions='attachments.media_keys').data)
+        username = api.get_user(user_id=keys).name
+        print(username)
+        header_str = "**" + username + "** just tweeted! \n"
 
-    print(tweet.created_at)
+        if now < tweetTime:  # should be <
+
+            # sending to multiple channels
+            try:
+                for j in range(len(values)):  # iterate through user_list
+                    user_id = (values[j].get("user_id"))
+                    channel_id = int(values[j].get("channel_id"))
+
+                    if channel_id in userDict:
+                        userDict[channel_id].append(user_id)
+                    else:
+                        userDict[channel_id] = [user_id]
+            except TypeError:  # if arr = [], continue
+                continue
+            for ch in userDict:
+                channel = client.get_channel(id=ch)
+                for i in range(len(userDict[ch])):
+                    mention_str += "<@" + str(userDict[ch][i]) + "> "
+                await channel.send(header_str + tweetData + '\n' + mention_str)
 
 
 def createProfile():
@@ -457,14 +481,17 @@ async def new_schedule():
             holo_schedule[i]["mentioned"] = True
             with open('holo_schedule.json', 'w') as h:
                 json.dump(holo_schedule, h, indent=4)
-            for j in range(len(user_list)):  # iterate through user_list
-                user_id = (user_list[j].get("user_id"))
-                channel_id = int(user_list[j].get("channel_id"))
+            try:
+                for j in range(len(user_list)):  # iterate through user_list
+                    user_id = (user_list[j].get("user_id"))
+                    channel_id = int(user_list[j].get("channel_id"))
 
-                if channel_id in userDict:
-                    userDict[channel_id].append(user_id)
-                else:
-                    userDict[channel_id] = [user_id]
+                    if channel_id in userDict:
+                        userDict[channel_id].append(user_id)
+                    else:
+                        userDict[channel_id] = [user_id]
+            except TypeError:  # if arr = [], continue
+                continue
 
             for ch in userDict:
                 channel = client.get_channel(id=ch)  # channel obj
@@ -503,15 +530,18 @@ async def now_streaming():
             with open('holo_schedule.json', 'w') as f:
                 json.dump(holo_schedule, f, indent=4)
 
-            for j in range((len(user_list))):
-                user_id = user_list[j].get("user_id")
-                channel_id = int(
-                    user_list[j].get("channel_id"))
+            try:
+                for j in range((len(user_list))):
+                    user_id = user_list[j].get("user_id")
+                    channel_id = int(
+                        user_list[j].get("channel_id"))
 
-                if channel_id in userDict:
-                    userDict[channel_id].append(user_id)
-                else:
-                    userDict[channel_id] = [user_id]
+                    if channel_id in userDict:
+                        userDict[channel_id].append(user_id)
+                    else:
+                        userDict[channel_id] = [user_id]
+            except TypeError:  # see above
+                continue
 
             for ch in userDict:
                 channel = client.get_channel(id=ch)  # channel obj
