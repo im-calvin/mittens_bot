@@ -202,21 +202,24 @@ async def tweetScrape():
         return
     now = datetime.now(timezone('UTC')) - timedelta(seconds=30)
 
-    tweetTime = []
-    mention_str = ''
-    userDict = {}
-
     for keys, values in twitter.items():  # iterating over the json file
-        tweets_list = api.user_timeline(user_id=keys, count=1)
+        # test = False
+        userDict = {}  # '2d array', k = channel_id, v = arr of user_ids
+        mention_str = ''
+
+        tweets_list = api.user_timeline(
+            user_id=keys, count=1)
         try:
             tweetTime = tweets_list[0].created_at
         except IndexError:  # if twitter acc has 0 msgs
-            return
+            # test = True
+            pass
 
+        # if test == False:
         tweetID = tweets_list[0].id
-        tweetData = str(TWClient.get_tweet(
-            id=tweetID).data)
+
         username = api.get_user(user_id=keys).name
+        tweetURL = f"https://twitter.com/{keys}/status/{tweetID}"
         header_str = "**" + username + "** just tweeted! \n"
 
         if now < tweetTime:  # should be <
@@ -233,11 +236,14 @@ async def tweetScrape():
                         userDict[channel_id] = [user_id]
             except TypeError:  # if arr = [], continue
                 continue
+
             for ch in userDict:
                 channel = client.get_channel(id=ch)
                 for i in range(len(userDict[ch])):
                     mention_str += "<@" + str(userDict[ch][i]) + "> "
-                await channel.send(header_str + tweetData + '\n' + mention_str)
+
+                await channel.send(header_str + tweetURL + '\n' + mention_str)
+    # print('tweetScrape')
 
 
 def createProfile():
@@ -369,6 +375,8 @@ async def duplicate(message, fileName, key, purpose):
 
                 json.dump(profiles, g, indent=4)
                 if fileName == 'twitter.json':
+                    # if profiles[key] == []:
+
                     try:
                         key = api.get_user(user_id=key).name
                     except tweepy.errors.NotFound:
