@@ -104,6 +104,9 @@ async def on_message(message):
         elif command == "remove":
             await removechannel(message, msg)
 
+        elif command == "removeall":
+            await removeall(message, msg)
+
         elif command == "schedule":
             try:
                 if msg[1] != "":  # if there is anything afterwards
@@ -443,6 +446,27 @@ async def removechannel(message, msg):
         await message.channel.send("Couldn't find the channel you specified.")
 
 # runs the scraper for holo-schedule
+
+
+async def removeall(message, msg):
+    msg = ' '.join(msg[1:]).strip()
+
+    with open('profiles.json', 'r') as f:
+        profiles = json.load(f)
+
+    chList = []
+    for keys, values in profiles.items():
+        for i, dict in enumerate(values):
+
+            if [message.channel.id, message.author.id] == list(dict.values()):
+                profiles[keys].pop(i)
+                chList.append(str(keys))
+
+    with open('profiles.json', 'w') as f:
+        json.dump(profiles, f, indent=4)
+
+    chStr = '**, **'.join(chList)
+    await message.channel.send("Removed **" + chStr + "** from your profile")
 
 
 async def firstScrape():
