@@ -6,7 +6,7 @@
   "AZKi": [],
   "Shirakami Fubuki": [
     {
-      "channel_id": 445609667431759874,
+      "channel_id": 984612852637773844,
       "user_id": 535296448233996288
     }
   ],
@@ -21,7 +21,12 @@
   "Murasaki Shion": [],
   "Oozora Subaru": [],
   "Ookami Mio": [],
-  "Nekomata Okayu": [],
+  "Nekomata Okayu": [
+    {
+      "channel_id": 984612852637773844,
+      "user_id": 182310565333565440
+    }
+  ],
   "Inugami Korone": [],
   "Shiranui Flare": [],
   "Shirogane Noel": [],
@@ -68,38 +73,59 @@
   "holoID": [],
   "Mori Calliope": [
     {
-      "channel_id": 445609667431759874,
+      "channel_id": 984612852637773844,
       "user_id": 277908415857295361
+    },
+    {
+      "channel_id": 984612852637773844,
+      "user_id": 182310565333565440
     }
   ],
   "Takanashi Kiara": [
     {
-      "channel_id": 445609667431759874,
+      "channel_id": 984612852637773844,
       "user_id": 277908415857295361
+    },
+    {
+      "channel_id": 984612852637773844,
+      "user_id": 182310565333565440
     }
   ],
   "Ninomae Ina'nis": [
     {
-      "channel_id": 445609667431759874,
+      "channel_id": 984612852637773844,
       "user_id": 277908415857295361
+    },
+    {
+      "channel_id": 984612852637773844,
+      "user_id": 182310565333565440
     }
   ],
   "Gawr Gura": [
     {
-      "channel_id": 445609667431759874,
+      "channel_id": 984612852637773844,
       "user_id": 277908415857295361
+    },
+    {
+      "channel_id": 984612852637773844,
+      "user_id": 182310565333565440
     }
   ],
   "Watson Amelia": [
     {
-      "channel_id": 445609667431759874,
+      "channel_id": 984612852637773844,
       "user_id": 277908415857295361
     }
   ],
   "holoEN": [],
   "IRyS": [],
   "Tsukumo Sana": [],
-  "Ceres Fauna": [],
+  "Ceres Fauna": [
+    {
+      "channel_id": 984612852637773844,
+      "user_id": 182310565333565440
+    }
+  ],
   "Ouro Kronii": [],
   "Nanashi Mumei": [],
   "Hakos Baelz": []
