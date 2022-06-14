@@ -209,6 +209,7 @@ async def tweetScrape():
             # test = False
             userDict = {}  # '2d array', k = channel_id, v = arr of user_ids
             mention_str = ''
+            noPic = False
 
             tweets_list = api.user_timeline(
                 user_id=keys, count=1, tweet_mode='extended')
@@ -237,20 +238,33 @@ async def tweetScrape():
                 pass
 
             tweetTxt = sanitizer_links(tweetObj.data.text)
+            # print(api.get_status(
+            # id=tweetID, tweet_mode='extended'))
+            try:
+                tweetPic = api.get_status(
+                    id=tweetID, tweet_mode='extended').extended_entities['media'][0]['media_url_https']
+                tweetURL = api.get_status(
+                    id=tweetID, tweet_mode='extended').extended_entities['media'][0]['url']
+                tweetURL = '<' + tweetURL + '>'
+            except AttributeError:
+                # tweetPic = api.get_status(
+                #     id=tweetID, tweet_mode='extended').entities['media'][0]['media_url_https']
+                # tweetURL = api.get_status(
+                # id=tweetID, tweet_mode='extended').entities['media'][0]['url']
 
-            tweetPic = api.get_status(
-                id=tweetID, tweet_mode='extended').extended_entities['media'][0]['media_url_https']
-
-            tweetURL = api.get_status(
-                id=tweetID, tweet_mode='extended').extended_entities['media'][0]['url']
-
-            tweetURL = '<' + tweetURL + '>'
+                tweetPic = ''
+                tweetURL = api.get_status(
+                    id=tweetID, tweet_mode='extended').entities['urls'][1]['url']
+                tweetURL = '<' + tweetURL + '>'
+                print(api.get_status(
+                    id=tweetID, tweet_mode='extended').entities)
+            # print(tweetURL)
 
             # reading tweetPic url and converting to file object
             async with aiohttp.ClientSession() as session:
                 async with session.get(tweetPic) as resp:
                     if resp.status != 200:
-                        return
+                        noPic = True
                     data = io.BytesIO(await resp.read())
 
             header_str = "**" + username + "** just tweeted! \n"
@@ -274,8 +288,10 @@ async def tweetScrape():
                     channel = client.get_channel(id=ch)
                     for i in range(len(userDict[ch])):
                         mention_str += "<@" + str(userDict[ch][i]) + "> "
-
-                    await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
+                    if noPic == True:
+                        await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str)
+                    else:
+                        await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
 
     except tweepy.errors.TweepyException:
         asyncio.sleep(20)
