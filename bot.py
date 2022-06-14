@@ -195,7 +195,7 @@ async def tweetRemove(message, msg):
     await duplicate(message, 'twitter.json', id, 'remove')
 
 
-@tasks.loop(seconds=30*10)
+@tasks.loop(seconds=30)
 async def tweetScrape():
     try:
         try:
@@ -245,7 +245,6 @@ async def tweetScrape():
                 id=tweetID, tweet_mode='extended').extended_entities['media'][0]['url']
 
             tweetURL = '<' + tweetURL + '>'
-
 
             # reading tweetPic url and converting to file object
             async with aiohttp.ClientSession() as session:
