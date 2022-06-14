@@ -2,3 +2,5 @@ __pycache__
 .vscode
 holo_schedule.json
 .env
+profiles.json
+twitter.json

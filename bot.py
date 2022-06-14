@@ -181,7 +181,8 @@ async def tweetAdd(message, msg):
     try:
         response = TWClient.get_user(username=vtuber_channel)
     except tweepy.errors.BadRequest:
-        return await message.channel.send('Twitter user not found. Make sure that you inputted the right twitter handle. \nExample: @gawrgura would be \"gawrgura\"')
+        await message.channel.send('Twitter user not found. Make sure that you inputted the right twitter handle. \nExample: @gawrgura would be \"gawrgura\"')
+        return
     id = response.data.id
 
     await duplicate(message, 'twitter.json', id, 'add')
