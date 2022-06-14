@@ -1,12 +1,14 @@
 # bot.py
 from operator import index
 import os
-from re import M
+import re
 import discord
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
 import json
-from requests import JSONDecodeError
+import aiohttp
+import io
+import requests
 import tweepy
 
 from holo_schedule import main
@@ -193,57 +195,92 @@ async def tweetRemove(message, msg):
     await duplicate(message, 'twitter.json', id, 'remove')
 
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=30*10)
 async def tweetScrape():
     try:
-        with open('twitter.json', 'r') as f:
-            twitter = json.load(f)
-    except json.decoder.JSONDecodeError:  # if twitter.json is empty
-        return
-    now = datetime.now(timezone('UTC')) - timedelta(seconds=30)
-
-    for keys, values in twitter.items():  # iterating over the json file
-        # test = False
-        userDict = {}  # '2d array', k = channel_id, v = arr of user_ids
-        mention_str = ''
-
-        tweets_list = api.user_timeline(
-            user_id=keys, count=1)
         try:
-            tweetTime = tweets_list[0].created_at
-        except IndexError:  # if twitter acc has 0 msgs
-            # test = True
-            pass
+            with open('twitter.json', 'r') as f:
+                twitter = json.load(f)
+        except json.decoder.JSONDecodeError:  # if twitter.json is empty
+            return
+        now = datetime.now(timezone('UTC')) - timedelta(seconds=30)
 
-        # if test == False:
-        tweetID = tweets_list[0].id
+        for keys, values in twitter.items():  # iterating over the json file
+            # test = False
+            userDict = {}  # '2d array', k = channel_id, v = arr of user_ids
+            mention_str = ''
 
-        username = api.get_user(user_id=keys).name
-        tweetURL = f"https://twitter.com/{keys}/status/{tweetID}"
-        header_str = "**" + username + "** just tweeted! \n"
-
-        if now < tweetTime:  # should be <
-
-            # sending to multiple channels
+            tweets_list = api.user_timeline(
+                user_id=keys, count=1, tweet_mode='extended')
             try:
-                for j in range(len(values)):  # iterate through user_list
-                    user_id = (values[j].get("user_id"))
-                    channel_id = int(values[j].get("channel_id"))
+                tweetTime = tweets_list[0].created_at
+            except IndexError:  # if twitter acc has 0 msgs
+                # test = True
+                pass
 
-                    if channel_id in userDict:
-                        userDict[channel_id].append(user_id)
-                    else:
-                        userDict[channel_id] = [user_id]
-            except TypeError:  # if arr = [], continue
-                continue
+            # if test == False:
+            tweetID = tweets_list[0].id_str
 
-            for ch in userDict:
-                channel = client.get_channel(id=ch)
-                for i in range(len(userDict[ch])):
-                    mention_str += "<@" + str(userDict[ch][i]) + "> "
+            username = api.get_user(user_id=keys).name
+            name = api.get_user(user_id=keys).screen_name
+            tweetObj = TWClient.get_tweet(
+                id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id'], media_fields=['preview_image_url'])
+            # )
+            try:
+                # if retweet
+                if tweetObj.includes.get('tweets')[0].text is not None:
+                    tweetID = tweetObj.includes.get('tweets')[0].id
+                    tweetObj = TWClient.get_tweet(id=tweetID, expansions=[
+                        'attachments.media_keys', 'referenced_tweets.id'], media_fields=['preview_image_url'])
+                    # )
+            except TypeError:  # if regular tweet
+                pass
 
-                await channel.send(header_str + tweetURL + '\n' + mention_str)
-    # print('tweetScrape')
+            tweetTxt = sanitizer_links(tweetObj.data.text)
+
+            tweetPic = api.get_status(
+                id=tweetID, tweet_mode='extended').extended_entities['media'][0]['media_url_https']
+
+            tweetURL = api.get_status(
+                id=tweetID, tweet_mode='extended').extended_entities['media'][0]['url']
+
+            tweetURL = '<' + tweetURL + '>'
+
+
+            # reading tweetPic url and converting to file object
+            async with aiohttp.ClientSession() as session:
+                async with session.get(tweetPic) as resp:
+                    if resp.status != 200:
+                        return
+                    data = io.BytesIO(await resp.read())
+
+            header_str = "**" + username + "** just tweeted! \n"
+
+            if now < tweetTime:  # should be <
+
+                # sending to multiple channels
+                try:
+                    for j in range(len(values)):  # iterate through user_list
+                        user_id = (values[j].get("user_id"))
+                        channel_id = int(values[j].get("channel_id"))
+
+                        if channel_id in userDict:
+                            userDict[channel_id].append(user_id)
+                        else:
+                            userDict[channel_id] = [user_id]
+                except TypeError:  # if arr = [], continue
+                    continue
+
+                for ch in userDict:
+                    channel = client.get_channel(id=ch)
+                    for i in range(len(userDict[ch])):
+                        mention_str += "<@" + str(userDict[ch][i]) + "> "
+
+                    await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
+
+    except tweepy.errors.TweepyException:
+        asyncio.sleep(20)
+        return
 
 
 def createProfile():
@@ -292,15 +329,7 @@ def sanitizer(msg):
 
 
 def sanitizer_links(msg):  # msg is str
-    try:
-        if msg.startswith("https://"):
-            list = msg.split(None, 1)
-            return list[1]
-        else:  # assume only at end
-            list = msg.rsplit(None, 1)
-            return list[0]
-    except IndexError:  # only link no msg
-        msg = ""
+    return re.sub(r'^https?:\/\/.*[\r\n]*', '', msg, flags=re.MULTILINE)
 
 
 def translator(message):

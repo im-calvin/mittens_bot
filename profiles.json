@@ -127,6 +127,11 @@
     }
   ],
   "Ouro Kronii": [],
-  "Nanashi Mumei": [],
+  "Nanashi Mumei": [
+    {
+      "channel_id": 984612852637773844,
+      "user_id": 277908415857295361
+    }
+  ],
   "Hakos Baelz": []
 }
