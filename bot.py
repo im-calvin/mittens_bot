@@ -69,8 +69,8 @@ async def on_ready():
     # # 前の結果で確認
 
     profileEmpty = createProfile()
-    if profileEmpty == True:
-        return
+    # if profileEmpty == True:
+    # return
 
     await firstScrape()
 
@@ -264,7 +264,7 @@ async def tweetScrape():
 
                 header_str = "**" + username + "** just tweeted! \n"
 
-                if now > tweetTime:  # should be <
+                if now < tweetTime:  # should be <
 
                     # sending to multiple channels
                     try:
