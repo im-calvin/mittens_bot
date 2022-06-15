@@ -279,7 +279,7 @@ async def tweetScrape():
                             noPic = True
                         data = io.BytesIO(await resp.read())
 
-            if now > tweetTime:  # should be <
+            if now < tweetTime:  # should be <
 
                 # sending to multiple channels
                 try:
