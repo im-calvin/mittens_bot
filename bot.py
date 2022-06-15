@@ -215,82 +215,100 @@ async def tweetScrape():
             mention_str = ''
             noPic = False
 
-            if values != []:
-                tweets_list = api.user_timeline(
-                    user_id=keys, count=1, tweet_mode='extended')
-                try:
-                    tweetTime = tweets_list[0].created_at
-                except IndexError:  # if twitter acc has 0 msgs
-                    # test = True
-                    pass
+            # try:
+            tweets_list = api.user_timeline(
+                user_id=keys, count=1, tweet_mode='extended')
+            try:
+                tweetTime = tweets_list[0].created_at
+            except IndexError:  # if twitter acc has 0 msgs
+                # test = True
+                pass
 
-                # if test == False:
-                tweetID = tweets_list[0].id_str
+            # if test == False:
+            tweetID = tweets_list[0].id_str
 
-                username = api.get_user(user_id=keys).name
-                name = api.get_user(user_id=keys).screen_name
-                tweetObj = TWClient.get_tweet(
-                    id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id'], media_fields=['preview_image_url'])
-                # )
-                try:
-                    # if retweet
-                    if tweetObj.includes.get('tweets')[0].text is not None:
-                        tweetID = tweetObj.includes.get('tweets')[0].id
-                        tweetObj = TWClient.get_tweet(id=tweetID, expansions=[
-                            'attachments.media_keys', 'referenced_tweets.id'], media_fields=['preview_image_url'])
-                        # )
-                except TypeError:  # if regular tweet
-                    pass
+            username = api.get_user(user_id=keys).name
+            name = api.get_user(user_id=keys).screen_name
+            # tweetObj = TWClient.get_tweet(
+            #     id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id', 'author_id'], media_fields=['preview_image_url'])
+            apiObj = api.get_status(id=tweetID, tweet_mode='extended')
 
-                tweetTxt = sanitizer_links(tweetObj.data.text).strip()
+            header_str = "**" + username + "** just tweeted! \n"
 
-                try:
-                    tweetPic = api.get_status(
-                        id=tweetID, tweet_mode='extended').extended_entities['media'][0]['media_url_https']
-                    tweetURL = api.get_status(
-                        id=tweetID, tweet_mode='extended').extended_entities['media'][0]['url']
-                    tweetURL = '<' + tweetURL + '>'
-                except AttributeError:  # if extended_entities doesn't exists
+            try:  # if it's a retweet
+                apiObj = apiObj.retweeted_status
+                RTname = api.get_user(user_id=apiObj.user.id_str).name
+                header_str = f"**{username}** just retweeted **{RTname}**\n"
+                # header_str = "**" + username + "** just retweeted " + api.get_user(user_id=apiObj.id_str).name + '\n'
+            except AttributeError:  # if not a retweet
+                pass
+
+            tweetID = apiObj.id_str
+            # tweetObj = TWClient.get_tweet(
+            #     id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id'], media_fields=['preview_image_url'])
+            # apiObj = api.get_status(id=tweetID, tweet_mode='extended')
+
+            tweetTxt = sanitizer_links(apiObj.full_text).strip()
+
+            # print(apiObj.retweeted)
+
+            # if there is any media in the tweet
+            try:
+                apiObj.entities['media']
+                try:  # if multiple images
+                    tweetPic = apiObj.extended_entities['media'][0]['media_url_https']
+                    tweetURL = '<' + \
+                        apiObj.extended_entities['media'][0]['url'] + '>'
+                # if extended_entities doesn't exists (1 img)
+                except AttributeError:
                     tweetPic = ''
-                    tweetURL = api.get_status(
-                        id=tweetID, tweet_mode='extended').entities['urls'][1]['url']
-                    tweetURL = '<' + tweetURL + '>'
+                    tweetURL = '<' + apiObj.entities['urls'][1]['url'] + '>'
+            except KeyError:  # if no entities
+                tweetURL = apiObj.entities['urls'][0]['url']
+                tweetURL = f"\n<{tweetURL}>"
+                noPic = True
 
-                # reading tweetPic url and converting to file object
+            # print(tweetPic)
+            # print(tweetURL)
+
+            # reading tweetPic url and converting to file object
+            if noPic == False:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(tweetPic) as resp:
                         if resp.status != 200:
                             noPic = True
                         data = io.BytesIO(await resp.read())
 
-                header_str = "**" + username + "** just tweeted! \n"
+            if now > tweetTime:  # should be <
 
-                if now < tweetTime:  # should be <
+                # sending to multiple channels
+                try:
+                    for j in range(len(values)):  # iterate through user_list
+                        user_id = (values[j].get("user_id"))
+                        channel_id = int(values[j].get("channel_id"))
 
-                    # sending to multiple channels
-                    try:
-                        for j in range(len(values)):  # iterate through user_list
-                            user_id = (values[j].get("user_id"))
-                            channel_id = int(values[j].get("channel_id"))
-
-                            if channel_id in userDict:
-                                userDict[channel_id].append(user_id)
-                            else:
-                                userDict[channel_id] = [user_id]
-                    except TypeError:  # if arr = [], continue
-                        continue
-
-                    for ch in userDict:
-                        channel = client.get_channel(id=ch)
-                        for i in range(len(userDict[ch])):
-                            mention_str += "<@" + str(userDict[ch][i]) + "> "
-                        if noPic == True:
-                            await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str)
+                        if channel_id in userDict:
+                            userDict[channel_id].append(user_id)
                         else:
-                            await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
+                            userDict[channel_id] = [user_id]
+                except TypeError:  # if arr = [], continue
+                    pass
 
+                # print(noPic)
+
+                for ch in userDict:
+                    channel = client.get_channel(id=ch)
+                    for i in range(len(userDict[ch])):
+                        mention_str += "<@" + str(userDict[ch][i]) + "> "
+                    if noPic == True:
+                        await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str)
+                    else:
+                        await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
+            # except IndexError: #values = []
+            #     pass
     except tweepy.errors.TweepyException:
-        asyncio.sleep(20)
+        await asyncio.sleep(20)
+        print('twitter is overloaded')
         return
 
 
@@ -320,6 +338,8 @@ async def exceptions(message):
     if 'dying' in message.content or 'ded' in message.content or 'dead' in message.content:
         await message.add_reaction('<:respawner:972568754049384478>')
     if message.content == "":  # if msg is empty (ie: image)
+        return "bruh what"
+    if message.content.startswith("::"):
         return "bruh what"
     return
 
