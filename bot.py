@@ -10,6 +10,7 @@ import aiohttp
 import io
 import requests
 import tweepy
+import deepl
 
 from holo_schedule import main
 from discord.ext import commands, tasks
@@ -33,6 +34,7 @@ consumer_secret = os.getenv('TWITTER_API_SECRET')
 access_token = os.getenv('TWITTER_ACCESS_TOKEN')
 access_token_secret = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
 bearer_token = os.getenv('BEARER_TOKEN')
+deepl_token = os.getenv('DEEPL')
 
 
 client = discord.Client()
@@ -43,6 +45,7 @@ translate_client = translate.Client.from_service_account_json(
 auth = tweepy.OAuth1UserHandler(
     consumer_key, consumer_secret, access_token, access_token_secret)
 api = tweepy.API(auth)
+dlTrans = deepl.Translator(deepl_token)
 
 all_members_list = []
 with open('holo_members.txt', 'rb') as f:
@@ -142,7 +145,8 @@ async def on_message(message):
             await message.channel.send('Unknown command')
 
     # translate
-    transl_msg = translator(message)
+    # transl_msg = translator(message)
+    transl_msg = deepl_translator(message)
     if transl_msg == "bruh what":
         return
     bot_msg = await message.channel.send(transl_msg)
@@ -156,7 +160,7 @@ async def on_message_edit(before, after):
     if flag == "bruh what":
         return
 
-    transl_msg = translator(after)
+    transl_msg = deepl_translator(after)
     if transl_msg == "bruh what":  # msg is empty
         return
     channel = after.channel  # channel object
@@ -265,12 +269,12 @@ async def tweetScrape():
                     tweetURL = '<' + apiObj.entities['urls'][1]['url'] + '>'
             except KeyError:  # if no entities
                 try:
-                    print(apiObj)
                     tweetURL = apiObj.entities['urls'][0]['url']
                     tweetURL = f"\n<{tweetURL}>"
                     noPic = True
                 except IndexError:  # if ONLY text
                     tweetURL = f"<https://twitter.com/{name}/status/{tweetID}>"
+                    noPic = True
 
             # print(tweetPic)
             # print(tweetURL)
@@ -389,6 +393,24 @@ def translator(message):
             return transl_msg
         else:
             return "bruh what"
+    else:
+        return "bruh what"
+
+
+def deepl_translator(message):
+    lang = dlTrans.translate_text(
+        message.content, target_lang='en-gb').detected_source_lang
+
+    san_msg = message.content
+    if ("<:" in message.content and ">" in message.content):
+        san_msg = sanitizer(message.content)  # sanitized msg
+    if "https://" in message.content:
+        san_msg = sanitizer_links(message.content)
+
+    if lang == 'JA' or lang == "FR" or lang == 'KO' or lang == 'ZH' or lang == 'ES':
+        transl_msg = dlTrans.translate_text(
+            message.content, target_lang='en-gb', preserve_formatting=True)
+        return transl_msg
     else:
         return "bruh what"
 
