@@ -264,9 +264,13 @@ async def tweetScrape():
                     tweetPic = ''
                     tweetURL = '<' + apiObj.entities['urls'][1]['url'] + '>'
             except KeyError:  # if no entities
-                tweetURL = apiObj.entities['urls'][0]['url']
-                tweetURL = f"\n<{tweetURL}>"
-                noPic = True
+                try:
+                    print(apiObj)
+                    tweetURL = apiObj.entities['urls'][0]['url']
+                    tweetURL = f"\n<{tweetURL}>"
+                    noPic = True
+                except IndexError:  # if ONLY text
+                    tweetURL = f"<https://twitter.com/{name}/status/{tweetID}>"
 
             # print(tweetPic)
             # print(tweetURL)
@@ -340,6 +344,8 @@ async def exceptions(message):
     if message.content == "":  # if msg is empty (ie: image)
         return "bruh what"
     if message.content.startswith("::"):
+        return "bruh what"
+    if message.content.startswith('!'):
         return "bruh what"
     return
 
