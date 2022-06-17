@@ -409,7 +409,7 @@ def deepl_translator(message):
 
     if lang == 'JA' or lang == "FR" or lang == 'KO' or lang == 'ZH' or lang == 'ES':
         transl_msg = dlTrans.translate_text(
-            message.content, target_lang='en-gb', preserve_formatting=True)
+            san_msg, target_lang='en-gb', preserve_formatting=True)
         return transl_msg
     else:
         return "bruh what"
