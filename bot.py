@@ -64,6 +64,7 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 profileEmpty = False
+translMode = 'deepl'
 
 
 @client.event
@@ -141,12 +142,19 @@ async def on_message(message):
         elif command == "twremove":
             await tweetRemove(message, msg)
 
+        elif command == "transl":
+            await transl(message, msg)
+
         else:
             await message.channel.send('Unknown command')
 
     # translate
     # transl_msg = translator(message)
-    transl_msg = deepl_translator(message)
+    # print(translMode)
+    if translMode == 'deepl':
+        transl_msg = deepl_translator(message)
+    elif translMode == 'google':
+        transl_msg = translator(message)
     if transl_msg == "bruh what":
         return
     bot_msg = await message.channel.send(transl_msg)
@@ -415,7 +423,23 @@ def deepl_translator(message):
         return "bruh what"
 
 
+async def transl(message, msg):
+    global translMode
+
+    msg = ' '.join(msg[1:])
+    if msg == 'deepl':
+        translMode = 'deepl'
+        await message.channel.send('Translation client set to deepl')
+        # return 'deepl'
+    elif msg == 'google':
+        translMode = 'google'
+        await message.channel.send('Translation client set to google')
+        # return 'google'
+    else:
+        await message.channel.send('Choose either \'deepl\' or \'google\'')
+
 # message = message obj, msg = whole msg str, command = msg[1:]
+
 
 async def fuzzySearch(message, msg):
     try:
