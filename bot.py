@@ -64,7 +64,7 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 profileEmpty = False
-translMode = 'deepl'
+translMode = 'google'
 
 
 @client.event
@@ -102,7 +102,7 @@ async def on_message(message):
         msg = message.content[1:].split(' ')
         command = msg[0]
         if command == "help":
-            await message.channel.send('add, remove, schedule, mySchedule, members, list, twadd, twremove, twlist')
+            await message.channel.send('add, remove, schedule, mySchedule, members, list, twadd, twremove, twlist, transl')
 
         elif command == "add":
             await addchannel(message, msg)
@@ -317,7 +317,7 @@ async def tweetScrape():
                     for i in range(len(userDict[ch])):
                         mention_str += "<@" + str(userDict[ch][i]) + "> "
                     if noPic == True:
-                        await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str)
+                        await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str)
                     else:
                         await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
             # except IndexError: #values = []
@@ -351,13 +351,13 @@ async def exceptions(message):
     # for gura-chan
     if message.content == "a":
         await message.channel.send("サメです！")
-    if 'dying' in message.content or 'ded' in message.content or 'dead' in message.content:
+    if 'dying' in message.content or 'ded' in message.content or 'dead' in message.content or 'accident' in message.content:
         await message.add_reaction('<:respawner:972568754049384478>')
     if message.content == "":  # if msg is empty (ie: image)
         return "bruh what"
-    if message.content.startswith("::"):
+    if message.content.startswith("::"):  # for egora
         return "bruh what"
-    if message.content.startswith('!'):
+    if message.content.startswith('!'):  # for hobbes
         return "bruh what"
     return
 
@@ -383,9 +383,8 @@ def sanitizer_links(msg):  # msg is str
 
 def translator(message):
     lang = translate_client.detect_language(message.content)["language"]
-    san_msg = message.content
-    if ("<:" in message.content and ">" in message.content):
-        san_msg = sanitizer(message.content)  # sanitized msg
+    san_msg = sanitizer(message.content).strip()
+
     if "https://" in message.content:
         san_msg = sanitizer_links(message.content)
 
@@ -409,9 +408,8 @@ def deepl_translator(message):
     lang = dlTrans.translate_text(
         message.content, target_lang='en-gb').detected_source_lang
 
-    san_msg = message.content
-    if ("<:" in message.content and ">" in message.content):
-        san_msg = sanitizer(message.content)  # sanitized msg
+    san_msg = sanitizer(message.content).strip()
+
     if "https://" in message.content:
         san_msg = sanitizer_links(message.content)
 
