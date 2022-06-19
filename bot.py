@@ -8,10 +8,10 @@ from google.cloud import translate_v2 as translate
 import json
 import aiohttp
 import io
-import requests
 import tweepy
 import deepl
 
+from furigana.furigana import print_plaintext
 from holo_schedule import main
 from discord.ext import commands, tasks
 import argparse
@@ -102,7 +102,7 @@ async def on_message(message):
         msg = message.content[1:].split(' ')
         command = msg[0]
         if command == "help":
-            await message.channel.send('add, remove, schedule, mySchedule, members, list, twadd, twremove, twlist, transl')
+            await message.channel.send('add, remove, schedule, mySchedule, members, list, twadd, twremove, twlist, transl, furigana')
 
         elif command == "add":
             await addchannel(message, msg)
@@ -145,8 +145,13 @@ async def on_message(message):
         elif command == "transl":
             await transl(message, msg)
 
+        elif command == "kana":
+            await kana(message)
+
         else:
             await message.channel.send('Unknown command')
+
+        return
 
     # translate
     # transl_msg = translator(message)
@@ -281,7 +286,7 @@ async def tweetScrape():
                     tweetURL = f"\n<{tweetURL}>"
                     noPic = True
                 except IndexError:  # if ONLY text
-                    tweetURL = f"<https://twitter.com/{name}/status/{tweetID}>"
+                    tweetURL = f"\nhttps://twitter.com/{name}/status/{tweetID}>"
                     noPic = True
 
             # print(tweetPic)
@@ -317,7 +322,7 @@ async def tweetScrape():
                     for i in range(len(userDict[ch])):
                         mention_str += "<@" + str(userDict[ch][i]) + "> "
                     if noPic == True:
-                        await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str)
+                        await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str)
                     else:
                         await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
             # except IndexError: #values = []
@@ -388,7 +393,7 @@ def translator(message):
     if "https://" in message.content:
         san_msg = sanitizer_links(message.content)
 
-    if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko" or lang == "zh":
+    if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko" or lang == "zh" or lang == 'tl':
         # zh-TW/HK = taiwan/hongkong, zh-CN = simplified
         if translate_client.detect_language(san_msg)["confidence"] > 0.80:
             transl_msg = translate_client.translate(san_msg, "en", "text")[
@@ -413,7 +418,7 @@ def deepl_translator(message):
     if "https://" in message.content:
         san_msg = sanitizer_links(message.content)
 
-    if lang == 'JA' or lang == "FR" or lang == 'KO' or lang == 'ZH' or lang == 'ES':
+    if lang == 'JA' or lang == "FR" or lang == 'KO' or lang == 'ZH' or lang == 'ES' or lang == 'TL':
         transl_msg = dlTrans.translate_text(
             san_msg, target_lang='en-gb', preserve_formatting=True)
         return transl_msg
@@ -421,10 +426,10 @@ def deepl_translator(message):
         return "bruh what"
 
 
-async def transl(message, msg):
+async def transl(message, msg):  # translmode
     global translMode
 
-    msg = ' '.join(msg[1:])
+    msg = ' '.join(msg[1:]).strip()
     if msg == 'deepl':
         translMode = 'deepl'
         await message.channel.send('Translation client set to deepl')
@@ -437,6 +442,20 @@ async def transl(message, msg):
         await message.channel.send('Choose either \'deepl\' or \'google\'')
 
 # message = message obj, msg = whole msg str, command = msg[1:]
+
+
+async def kana(message):
+    channel = message.channel
+    try:
+        messageID = message.reference.message_id
+    except AttributeError:  # if no reply
+        await message.channel.send('You need to reply to a message')
+        return
+
+    message = await channel.fetch_message(messageID)
+    kanaMsg = print_plaintext(message.content)
+
+    await channel.send(kanaMsg)
 
 
 async def fuzzySearch(message, msg):
