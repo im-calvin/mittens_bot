@@ -216,7 +216,7 @@ async def tweetRemove(message, msg):
     await duplicate(message, 'twitter.json', id, 'remove')
 
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=20)
 async def tweetScrape():
     try:
         try:
@@ -224,7 +224,7 @@ async def tweetScrape():
                 twitter = json.load(f)
         except json.decoder.JSONDecodeError:  # if twitter.json is empty
             return
-        now = datetime.now(timezone('UTC')) - timedelta(seconds=30)
+        now = datetime.now(timezone('UTC')) - timedelta(seconds=20)
 
         for keys, values in twitter.items():  # iterating over the json file
             # test = False
