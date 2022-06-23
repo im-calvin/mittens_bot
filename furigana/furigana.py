@@ -110,17 +110,6 @@ def split_furigana(text):
     return ret
 
 
-def print_html(text):
-    for pair in split_furigana(text):
-        if len(pair) == 2:
-            kanji, hira = pair
-            print("<ruby><rb>{0}</rb><rt>{1}</rt></ruby>".
-                  format(kanji, hira), end='')
-        else:
-            print(pair[0], end='')
-    print('')
-
-
 def print_plaintext(text):
     x = ''
     for pair in split_furigana(text):
@@ -132,10 +121,5 @@ def print_plaintext(text):
     return x
 
 
-def main():
-    text = sys.argv[1]
-    print_html(text)
-
-
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+    # main()

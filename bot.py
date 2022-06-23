@@ -22,8 +22,9 @@ from datetime import datetime, timedelta, time
 from time import mktime
 from pytz import timezone
 
-# from jisho_api.word import Word
-# from jisho_api.kanji import Kanji
+from jisho_api.word import Word
+from jisho_api.kanji import Kanji
+from jisho_api.tokenize import Tokens
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -328,8 +329,6 @@ async def tweetScrape():
             # except IndexError: #values = []
             #     pass
     except tweepy.errors.TweepyException:
-        await asyncio.sleep(20)
-        print('twitter is overloaded')
         return
 
 
@@ -364,6 +363,8 @@ async def exceptions(message):
         return "bruh what"
     if message.content.startswith('!'):  # for hobbes
         return "bruh what"
+    if message.content == "助けて":
+        return "gasket A"
     return
 
 # sanitize messages
@@ -453,6 +454,32 @@ async def kana(message):
         return
 
     message = await channel.fetch_message(messageID)
+    # r = Tokens.request(message.content)
+    # tList = []
+    # wordList = []
+    # outList = []
+    # try:
+    #     for i in range(len(r.data)):
+    #         tList.append(r.data[i].token)
+    #         # try:
+    #         wordList.append(Word.request(tList[i]))
+    #         outList.append(wordList[i].data[0].japanese[0].reading)
+    #         print(wordList[0])
+    #     # except:  # if token is not kanji, continue
+    #     # pass
+    # except AttributeError:  # too short to be multiple phrases (1 phrase)
+    #     r = Word.request(message.content)
+    #     outList.append(r.data[0].japanese[0].reading)
+    #     print(r.data[0])
+
+    # await channel.send(tList)
+    # await channel.send(outList)
+    # # print(wordList[0].data[0].japanese[0].reading)
+    # # print(wordList[[0].data.meta.readings.japanese[0]])
+    # # print(xList)
+
+    # print(tList)
+
     kanaMsg = print_plaintext(message.content)
 
     await channel.send(kanaMsg)
