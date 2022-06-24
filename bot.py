@@ -221,7 +221,7 @@ async def tweetRemove(message, msg):
 async def tweetScrape():
     errorFlag = False
     try:
-        if errorFlag == True:
+        if errorFlag == False:
             try:
                 with open('twitter.json', 'r') as f:
                     twitter = json.load(f)
