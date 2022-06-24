@@ -425,9 +425,12 @@ def deepl_translator(message):
         san_msg = sanitizer_links(message.content)
 
     if lang == 'JA' or lang == "FR" or lang == 'KO' or lang == 'ZH' or lang == 'ES' or lang == 'TL':
-        transl_msg = dlTrans.translate_text(
-            san_msg, target_lang='en-gb', preserve_formatting=True)
-        return transl_msg
+        try:
+            transl_msg = dlTrans.translate_text(
+                san_msg, target_lang='en-gb', preserve_formatting=True)
+            return transl_msg  
+        except ValueError: 
+            return "bruh what"
     else:
         return "bruh what"
 
