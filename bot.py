@@ -19,6 +19,7 @@ import json
 import asyncio
 
 from datetime import datetime, timedelta, time
+import time as ttime
 from time import mktime
 from pytz import timezone
 
@@ -714,7 +715,8 @@ async def new_schedule():
         holo_time = holo_schedule[i].get("time").split(':')
         holo_date = holo_schedule[i].get("date")
         unix_time = time_convert(holo_time, holo_date)
-        time_str = "<t:" + str(unix_time) + ">! \n"
+        time_str = "<t:" + str(unix_time) + ">"
+        relative_time_str = "<t:" + str(unix_time) + ":R>"
         header_str = "**" + vtuber_channel + "** scheduled a stream at "
         title_str = holo_schedule[i].get("title")
         url = holo_schedule[i].get("url")
@@ -741,7 +743,7 @@ async def new_schedule():
                 for i in range(len(userDict[ch])):
                     mention_str += "<@" + str(userDict[ch][i]) + "> "
 
-                await channel.send(header_str + time_str + title_str + "\n=> " + url + "\n" + mention_str)
+                await channel.send('{} {} / {} \n {} \n {}'.format(header_str, time_str, relative_time_str, url, mention_str))
     # print('checking schedule')
 
 
@@ -900,11 +902,24 @@ async def embedMsg(message, hList, length):
         holo_date = hList[i].get("date")
         unix_time = time_convert(holo_time, holo_date)
         time_str = "<t:" + str(unix_time) + ">"
+        relative_time_str = "<t:" + str(unix_time) + ":R>"
         member_str = hList[i].get("member") + " "
         title_str = hList[i].get("title")
         url = hList[i].get("url")
-        embedVar.add_field(name='{}~ **{}:**'.format(
-            time_str, member_str), value='{}'.format(url), inline=False)
+
+        for i in range(len(title_str)):
+            m = re.search('【(.+?)】', title_str)
+            if m:
+                title_str = m.group(1)
+
+        # print(unix_time)
+        if int(ttime.time()) > unix_time:
+            relative_time_str = "`Now Airing!`"
+            # print(mktime(datetime.now(timezone('UTC')).timetuple()))
+
+        embedVar.add_field(name='{} / {}'.format(
+            time_str, relative_time_str), value='`{}`: [{}]({})'.format(member_str, title_str, url), inline=False)
+
     await message.channel.send(embed=embedVar)
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
