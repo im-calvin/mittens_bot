@@ -398,6 +398,9 @@ def translator(message):
     if "https://" in message.content:
         san_msg = sanitizer_links(message.content)
 
+    if san_msg == '':
+        return "bruh what"
+
     if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko" or lang == "zh" or lang == 'tl':
         # zh-TW/HK = taiwan/hongkong, zh-CN = simplified
         if translate_client.detect_language(san_msg)["confidence"] > 0.80:
