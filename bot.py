@@ -155,9 +155,6 @@ async def on_message(message):
 
         return
 
-    # translate
-    # transl_msg = translator(message)
-    # print(translMode)
     if translMode == 'deepl':
         transl_msg = deepl_translator(message)
     elif translMode == 'google':
@@ -267,7 +264,7 @@ async def tweetScrape():
             #     id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id'], media_fields=['preview_image_url'])
             # apiObj = api.get_status(id=tweetID, tweet_mode='extended')
 
-            tweetTxt = sanitizer_links(apiObj.full_text).strip()
+            tweetTxt = sanitizer(apiObj.full_text).strip()
 
             # print(apiObj.retweeted)
 
@@ -359,6 +356,7 @@ async def exceptions(message):
     # for gura-chan
     if message.content == "a":
         await message.channel.send("サメです！")
+        return "bruh what"
     if 'dying' in message.content or 'ded' in message.content or 'dead' in message.content or 'accident' in message.content:
         await message.add_reaction('<:respawner:972568754049384478>')
     if message.content == "":  # if msg is empty (ie: image)
@@ -368,38 +366,22 @@ async def exceptions(message):
     if message.content.startswith('!'):  # for hobbes
         return "bruh what"
     if message.content == "助けて":
-        return "gasket A"
+        await message.channel.send("Gasket A")
+        return "bruh what"
     return
 
 # sanitize messages
 
 
 def sanitizer(msg):
-    while True:
-        # since slicing is exclusive of index1, inclusive of index2
-        index1 = msg.find('<')
-        index2 = msg.find('>') + 1
-        msg = msg.replace(
-            msg[index1:index2], "")
-        if msg.find('<') == -1:
-            return msg
-
-# sanitize links
-
-
-def sanitizer_links(msg):  # msg is str
-    return re.sub(r'http\S+', '', msg)
+    msg = re.sub(r'http\S+', '', msg)  # links
+    msg = re.sub(r'<.+>', '', msg)
+    return msg.strip()  # emotes
 
 
 def translator(message):
     lang = translate_client.detect_language(message.content)["language"]
-    san_msg = sanitizer(message.content).strip()
-
-    if "https://" in message.content:
-        san_msg = sanitizer_links(message.content)
-
-    if san_msg == '':
-        return "bruh what"
+    san_msg = sanitizer(message.content)
 
     if lang == "ja" or lang == "zh-CN" or lang == "zh-TW" or lang == "fr" or lang == "ko" or lang == "zh" or lang == 'tl':
         # zh-TW/HK = taiwan/hongkong, zh-CN = simplified
@@ -421,10 +403,7 @@ def deepl_translator(message):
     lang = dlTrans.translate_text(
         message.content, target_lang='en-gb').detected_source_lang
 
-    san_msg = sanitizer(message.content).strip()
-
-    if "https://" in message.content:
-        san_msg = sanitizer_links(message.content)
+    san_msg = sanitizer(message.content)
 
     if lang == 'JA' or lang == "FR" or lang == 'KO' or lang == 'ZH' or lang == 'ES' or lang == 'TL':
         try:
