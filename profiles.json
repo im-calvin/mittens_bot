@@ -6,7 +6,7 @@
   "AZKi": [],
   "Shirakami Fubuki": [
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 535296448233996288
     }
   ],
@@ -68,65 +68,85 @@
   "holoID": [],
   "Mori Calliope": [
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 277908415857295361
     },
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 182310565333565440
     }
   ],
   "Takanashi Kiara": [
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 277908415857295361
     },
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 182310565333565440
     }
   ],
   "Ninomae Ina'nis": [
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 277908415857295361
     },
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 182310565333565440
     }
   ],
   "Gawr Gura": [
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 277908415857295361
     },
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 182310565333565440
     }
   ],
   "Watson Amelia": [
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 277908415857295361
     }
   ],
   "holoEN": [],
-  "IRyS": [],
-  "Tsukumo Sana": [],
-  "Ceres Fauna": [
+  "IRyS": [
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 182310565333565440
     }
   ],
-  "Ouro Kronii": [],
-  "Nanashi Mumei": [
+  "Tsukumo Sana": [
     {
-      "channel_id": 984612852637773844,
+      "channel_id": 993032295902629888,
       "user_id": 277908415857295361
     }
   ],
-  "Hakos Baelz": []
+  "Ceres Fauna": [
+    {
+      "channel_id": 993032295902629888,
+      "user_id": 182310565333565440
+    }
+  ],
+  "Ouro Kronii": [
+    {
+      "channel_id": 993032295902629888,
+      "user_id": 277908415857295361
+    }
+  ],
+  "Nanashi Mumei": [
+    {
+      "channel_id": 993032295902629888,
+      "user_id": 277908415857295361
+    }
+  ],
+  "Hakos Baelz": [
+    {
+      "channel_id": 993032295902629888,
+      "user_id": 182310565333565440
+    }
+  ]
 }

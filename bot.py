@@ -102,9 +102,9 @@ async def on_message(message):
     # profiles
     if message.content[0] == PREFIX:
         msg = message.content[1:].split(' ')
-        command = msg[0]
+        command = msg[0].strip()
         if command == "help":
-            await message.channel.send('add, remove, schedule, mySchedule, members, list, twadd, twremove, twlist, transl, furigana')
+            await message.channel.send('add, remove, schedule, myschedule, members, list, twadd, twremove, twlist, transl, kana')
 
         elif command == "add":
             await addchannel(message, msg)
@@ -115,7 +115,7 @@ async def on_message(message):
         elif command == "removeall":
             await removeall(message, msg)
 
-        elif command == "schedule":
+        elif command == "schedule" or command == 's':
             try:
                 if msg[1] != "":  # if there is anything afterwards
                     await specificSchedule(message, msg)
@@ -123,7 +123,7 @@ async def on_message(message):
             except IndexError:  # if there's no name
                 await schedule(message)
 
-        elif command == "myschedule":
+        elif command == "myschedule" or command == 'mys':
             await myschedule(message)
 
         elif command == "members":
@@ -286,7 +286,7 @@ async def tweetScrape():
                     tweetURL = f"\n<{tweetURL}>"
                     noPic = True
                 except IndexError:  # if ONLY text
-                    tweetURL = f"\nhttps://twitter.com/{name}/status/{tweetID}>"
+                    tweetURL = f"\n<https://twitter.com/{name}/status/{tweetID}>"
                     noPic = True
 
             # print(tweetPic)
@@ -929,12 +929,14 @@ argparser.add_argument(
 )
 
 
-MEMBER_LIST_STR = """
-**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rosenthal, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimachi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha
-**Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio
-**HoloID:** Ayunda Risu, Moona Hoshinova, Airani Iofifteen, Kureiji Ollie, Anya Melfissa, Pavolia Reine, Vestia Zeta, Kaela Kovalskia, Kobo Kanaeru
-**HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukumo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hakos Baelz
-"""
+# MEMBER_LIST_STR = """
+# **Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rosenthal, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimachi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha
+# **Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio
+# **HoloID:** Ayunda Risu, Moona Hoshinova, Airani Iofifteen, Kureiji Ollie, Anya Melfissa, Pavolia Reine, Vestia Zeta, Kaela Kovalskia, Kobo Kanaeru
+# **HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukumo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hakos Baelz
+# """
+
+MEMBER_LIST_STR = all_members_list
 
 
 client.run(TOKEN)
