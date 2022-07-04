@@ -961,14 +961,14 @@ MEMBER_LIST_STR = """
 
 # MEMBER_LIST_STR = all_members_list
 
-holoEN = ['Mori Calliope', 'Takanashi Kiara', 'Ninomae Ina\'nis', 'Gawr Gura', 'Watson Amelia',
-          'IRyS', 'Tsukumo Sana', 'Ceres Fauna', 'Ouro Kronii', 'Nanashi Mumei', 'Hakos Baelz']
-holoID = ['Ayunda Risu', 'Moona Hoshinova', 'Airani Iofifteen', 'Kureiji Ollie',
-          'Anya Melfissa', 'Pavolia Reine', 'Vestia Zeta', 'Kaela Kovalskia', 'Kobo Kanaeru']
-holoSTARS = ['Hanasaki Miyabi', 'Kanade Izuru', 'Arurandeisu', 'Rikka', 'Astel Leda', 'Kishidou Tenma',
-             'Yukoku Roberu', 'Kageyama Shien', 'Aragami Oga', 'Yatogami Fuma', 'Utsugi Uyu', 'Hizaki Gamma', 'Minase Rio']
-holoJP = ['Tokino Sora', 'Roboco-san', 'Sakura Miko', 'AZKi', 'Shirakami Fubuki', 'Natsuiro Matsuri', 'Yozora Mel', 'Akai Haato', 'Aki Rosenthal', 'Minato Aqua', 'Yuzuki Choco', 'Yuzuki Choko Sub', 'Nakiri Ayame', 'Murasaki Shion', 'Oozora Subaru', 'Ookami Mio', 'Nekomata Okayu', 'Inugami Korone', 'Shiranui Flare',
-          'Shirogane Noel', 'Houshou Marine', 'Usada Pekora', 'Uruha Rushia', 'Hoshimachi Suisei', 'Amane Kanata', 'Tsunomaki Watame', 'Tokoyami Towa', 'Himemori Luna', 'Yukihana Lamy', 'Momosuzu Nene', 'Sishiro Botan', 'Omaru Polka', 'La+ Darknesss', 'Takane Lui', 'Hakui Koyori', 'Sakamata Chloe', 'Kazama Iroha']
+# using +1 instead of 0 to remove the titles: 'holoEN, holoID, holostars...'
+
+holoJP = all_members_list[1:all_members_list.index('holostars')]
+holoSTARS = all_members_list[all_members_list.index(
+    'holostars')+1:all_members_list.index('holoID')]
+holoID = all_members_list[all_members_list.index(
+    'holoID')+1:all_members_list.index('holoEN')]
+holoEN = all_members_list[all_members_list.index('holoEN')+1:]
 
 holo_dict = {
     'JP': holoJP,
