@@ -245,9 +245,6 @@ async def tweetScrape():
                 twitter = json.load(f)
         except json.decoder.JSONDecodeError:  # if twitter.json is empty
             return
-        now = datetime.now(timezone('UTC')) - timedelta(seconds=20)
-
-        print(twDict)
 
         for keys, values in twitter.items():  # iterating over the json file
             # test = False
