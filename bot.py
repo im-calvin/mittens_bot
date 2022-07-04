@@ -104,7 +104,7 @@ async def on_message(message):
         msg = message.content[1:].split(' ')
         command = msg[0].strip()
         if command == "help":
-            await message.channel.send('add, remove, schedule, myschedule, members, list, twadd, twremove, twlist, transl, kana')
+            await message.channel.send('add, remove, schedule [en, jp, id, stars, \'name\'], myschedule, members, list, twadd, twremove, twlist, transl, kana')
 
         elif command == "add":
             await addchannel(message, msg)
@@ -855,6 +855,10 @@ async def specificSchedule(message, msg):
         holo_schedule = json.load(f)
     msg = ' '.join(msg[1:]).strip()
 
+    if msg == 'en' or msg == 'id' or msg == 'jp' or msg == 'stars':
+        await regionSchedule(message, msg)
+        return
+
     indexOfMember, possibleMatch = await fuzzySearch(message, msg)
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
         vtuber_channel = all_members_list[indexOfMember]
@@ -870,6 +874,22 @@ async def specificSchedule(message, msg):
 
     else:
         await message.channel.send("Couldn't find the channel you specified.")
+
+
+async def regionSchedule(message, msg):
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    regionList = holo_dict[msg.upper()]
+    scheduleList = []
+
+    for i in range(len(holo_schedule)):
+        if holo_schedule[i]["member"] in regionList:
+            scheduleList.append(holo_schedule[i])
+    if scheduleList == []:
+        await message.channel.send("holo{} has no scheduled streams".format(msg))
+        return
+    await embedMsg(message, scheduleList, len(scheduleList))
+    return
 
 
 async def embedMsg(message, hList, length):
@@ -893,6 +913,9 @@ async def embedMsg(message, hList, length):
             m = re.search('【(.+?)】', title_str)
             if m:
                 title_str = m.group(1)
+
+        if title_str == "":
+            title_str = "Link to the stream"
 
         # print(unix_time)
         if int(ttime.time()) > unix_time:
@@ -929,14 +952,29 @@ argparser.add_argument(
 )
 
 
-# MEMBER_LIST_STR = """
-# **Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rosenthal, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimachi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha
-# **Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio
-# **HoloID:** Ayunda Risu, Moona Hoshinova, Airani Iofifteen, Kureiji Ollie, Anya Melfissa, Pavolia Reine, Vestia Zeta, Kaela Kovalskia, Kobo Kanaeru
-# **HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukumo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hakos Baelz
-# """
+MEMBER_LIST_STR = """
+**Hololive:** Tokino Sora, Roboco-san, Sakura Miko, AZKi, Shirakami Fubuki, Natsuiro Matsuri, Yozora Mel, Akai Haato, Aki Rosenthal, Minato Aqua, Yuzuki Choco, Yuzuki Choko Sub, Nakiri Ayame, Murasaki Shion, Oozora Subaru, Ookami Mio, Nekomata Okayu, Inugami Korone, Shiranui Flare, Shirogane Noel, Houshou Marine, Usada Pekora, Uruha Rushia, Hoshimachi Suisei, Amane Kanata, Tsunomaki Watame, Tokoyami Towa, Himemori Luna, Yukihana Lamy, Momosuzu Nene, Sishiro Botan, Omaru Polka, La+ Darknesss, Takane Lui, Hakui Koyori, Sakamata Chloe, Kazama Iroha
+**Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio
+**HoloID:** Ayunda Risu, Moona Hoshinova, Airani Iofifteen, Kureiji Ollie, Anya Melfissa, Pavolia Reine, Vestia Zeta, Kaela Kovalskia, Kobo Kanaeru
+**HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukumo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hakos Baelz
+"""
 
-MEMBER_LIST_STR = all_members_list
+# MEMBER_LIST_STR = all_members_list
 
+holoEN = ['Mori Calliope', 'Takanashi Kiara', 'Ninomae Ina\'nis', 'Gawr Gura', 'Watson Amelia',
+          'IRyS', 'Tsukumo Sana', 'Ceres Fauna', 'Ouro Kronii', 'Nanashi Mumei', 'Hakos Baelz']
+holoID = ['Ayunda Risu', 'Moona Hoshinova', 'Airani Iofifteen', 'Kureiji Ollie',
+          'Anya Melfissa', 'Pavolia Reine', 'Vestia Zeta', 'Kaela Kovalskia', 'Kobo Kanaeru']
+holoSTARS = ['Hanasaki Miyabi', 'Kanade Izuru', 'Arurandeisu', 'Rikka', 'Astel Leda', 'Kishidou Tenma',
+             'Yukoku Roberu', 'Kageyama Shien', 'Aragami Oga', 'Yatogami Fuma', 'Utsugi Uyu', 'Hizaki Gamma', 'Minase Rio']
+holoJP = ['Tokino Sora', 'Roboco-san', 'Sakura Miko', 'AZKi', 'Shirakami Fubuki', 'Natsuiro Matsuri', 'Yozora Mel', 'Akai Haato', 'Aki Rosenthal', 'Minato Aqua', 'Yuzuki Choco', 'Yuzuki Choko Sub', 'Nakiri Ayame', 'Murasaki Shion', 'Oozora Subaru', 'Ookami Mio', 'Nekomata Okayu', 'Inugami Korone', 'Shiranui Flare',
+          'Shirogane Noel', 'Houshou Marine', 'Usada Pekora', 'Uruha Rushia', 'Hoshimachi Suisei', 'Amane Kanata', 'Tsunomaki Watame', 'Tokoyami Towa', 'Himemori Luna', 'Yukihana Lamy', 'Momosuzu Nene', 'Sishiro Botan', 'Omaru Polka', 'La+ Darknesss', 'Takane Lui', 'Hakui Koyori', 'Sakamata Chloe', 'Kazama Iroha']
+
+holo_dict = {
+    'JP': holoJP,
+    'EN': holoEN,
+    'ID': holoID,
+    'STARS': holoSTARS
+}
 
 client.run(TOKEN)
