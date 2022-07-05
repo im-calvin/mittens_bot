@@ -1,5 +1,4 @@
 # bot.py
-from operator import index
 import os
 import re
 import discord
@@ -69,19 +68,21 @@ twDict = {}
 translMode = 'google'
 
 
-# createTweet()
-try:
-    with open('twitter.json', 'r') as f:
-        twitter = json.load(f)
-    for keys in twitter:
-        # twDict dict with keys as twitter IDs and empty value
-        # twDict value should be most recent id from x user
-        tweets_list = api.user_timeline(
-            user_id=keys, count=1, tweet_mode='extended')
-        twDict[keys] = tweets_list[0].id_str
-except json.decoder.JSONDecodeError:  # if twitter.json empty
-    print('twitter.json is empty')
-    pass
+def createTweet():
+    global twDict
+    try:
+        with open('twitter.json', 'r') as f:
+            twitter = json.load(f)
+        for keys in twitter:
+            # twDict dict with keys as twitter IDs and empty value
+            # twDict value should be most recent id from x user
+            tweets_list = api.user_timeline(
+                user_id=keys, count=1, tweet_mode='extended')
+            twDict[keys] = tweets_list[0].id_str
+    except json.decoder.JSONDecodeError:  # if twitter.json empty
+        print('twitter.json is empty')
+        pass
+
 
 # createProfile()
 try:
@@ -101,6 +102,7 @@ async def on_ready():
     # # 前の結果で確認
 
     await firstScrape()
+    createTweet()
 
     get_holo_schedule.start()  # background task
     now_streaming.start()
@@ -237,7 +239,7 @@ async def tweetRemove(message, msg):
     await duplicate(message, 'twitter.json', id, 'remove')
 
 
-@tasks.loop(seconds=20)
+@tasks.loop(seconds=30)
 async def tweetScrape():
     try:
         try:
@@ -252,100 +254,113 @@ async def tweetScrape():
             mention_str = ''
             noPic = False
 
-            tweets_list = TWClient.get_users_tweets(id=keys, expansions=[
-                                                    "attachments.media_keys", "referenced_tweets.id", "author_id"], since_id=twDict[keys])
+            try:
+                tweets_list = TWClient.get_users_tweets(id=keys, expansions=[
+                                                        "attachments.media_keys", "referenced_tweets.id", "author_id"], since_id=twDict[keys])
+            except KeyError:  # if twitter user was added while the bot was running
+                # THIS ERROR ISN'T FIXED
+                createTweet()
+                return
+
             # debugging line:
             # tweets_list = TWClient.get_users_tweets(id=keys, expansions=[
             #     "attachments.media_keys", "referenced_tweets.id", "author_id"])
 
             if tweets_list.data != None:
-                tweetID = tweets_list.data[0].id
-                twDict[keys] = tweetID
+                tweetID_list = tweets_list.data
+                twDict[keys] = tweetID_list[0].id
+                # in case more than one tweet within 30s
+                for i in range(len(tweetID_list)):
+                    userDict = {}
+                    mention_str = ''
+                    noPic = False
 
-                username = api.get_user(user_id=keys).name
-                name = api.get_user(user_id=keys).screen_name
-                # tweetObj = TWClient.get_tweet(
-                #     id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id', 'author_id'], media_fields=['preview_image_url'])
-                apiObj = api.get_status(id=tweetID, tweet_mode='extended')
+                    tweetID = tweetID_list[i].id
 
-                header_str = "**" + username + "** just tweeted! \n"
+                    username = api.get_user(user_id=keys).name
+                    name = api.get_user(user_id=keys).screen_name
+                    # tweetObj = TWClient.get_tweet(
+                    #     id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id', 'author_id'], media_fields=['preview_image_url'])
+                    apiObj = api.get_status(id=tweetID, tweet_mode='extended')
 
-                try:  # if it's a retweet
-                    apiObj = apiObj.retweeted_status
-                    RTname = api.get_user(user_id=apiObj.user.id_str).name
-                    header_str = f"**{username}** just retweeted **{RTname}**\n"
-                    # header_str = "**" + username + "** just retweeted " + api.get_user(user_id=apiObj.id_str).name + '\n'
-                except AttributeError:  # if not a retweet
-                    pass
+                    header_str = "**" + username + "** just tweeted! \n"
 
-                tweetID = apiObj.id_str
-                # tweetObj = TWClient.get_tweet(
-                #     id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id'], media_fields=['preview_image_url'])
-                # apiObj = api.get_status(id=tweetID, tweet_mode='extended')
+                    try:  # if it's a retweet
+                        apiObj = apiObj.retweeted_status
+                        RTname = api.get_user(user_id=apiObj.user.id_str).name
+                        header_str = f"**{username}** just retweeted **{RTname}**\n"
+                        # header_str = "**" + username + "** just retweeted " + api.get_user(user_id=apiObj.id_str).name + '\n'
+                    except AttributeError:  # if not a retweet
+                        pass
 
-                tweetTxt = sanitizer(apiObj.full_text).strip()
+                    tweetID = apiObj.id_str
+                    # tweetObj = TWClient.get_tweet(
+                    #     id=tweetID, expansions=['attachments.media_keys', 'referenced_tweets.id'], media_fields=['preview_image_url'])
+                    # apiObj = api.get_status(id=tweetID, tweet_mode='extended')
 
-                # print(apiObj.retweeted)
+                    tweetTxt = sanitizer(apiObj.full_text).strip()
 
-                # if there is any media in the tweet
-                try:
-                    apiObj.entities['media']
-                    try:  # if multiple images
-                        tweetPic = apiObj.extended_entities['media'][0]['media_url_https']
-                        tweetURL = '<' + \
-                            apiObj.extended_entities['media'][0]['url'] + '>'
-                    # if extended_entities doesn't exists (1 img)
-                    except AttributeError:
-                        tweetPic = ''
-                        tweetURL = '<' + \
-                            apiObj.entities['urls'][1]['url'] + '>'
-                except KeyError:  # if no entities
+                    # print(apiObj.retweeted)
+
+                    # if there is any media in the tweet
                     try:
-                        tweetURL = apiObj.entities['urls'][0]['url']
-                        tweetURL = f"\n<{tweetURL}>"
-                        noPic = True
-                    except IndexError:  # if ONLY text
-                        tweetURL = f"\n<https://twitter.com/{name}/status/{tweetID}>"
-                        noPic = True
+                        apiObj.entities['media']
+                        try:  # if multiple images
+                            tweetPic = apiObj.extended_entities['media'][0]['media_url_https']
+                            tweetURL = '<' + \
+                                apiObj.extended_entities['media'][0]['url'] + '>'
+                        # if extended_entities doesn't exists (1 img)
+                        except AttributeError:
+                            tweetPic = ''
+                            tweetURL = '<' + \
+                                apiObj.entities['urls'][1]['url'] + '>'
+                    except KeyError:  # if no entities
+                        try:
+                            tweetURL = apiObj.entities['urls'][0]['url']
+                            tweetURL = f"\n<{tweetURL}>"
+                            noPic = True
+                        except IndexError:  # if ONLY text
+                            tweetURL = f"\n<https://twitter.com/{name}/status/{tweetID}>"
+                            noPic = True
 
-                # print(tweetPic)
-                # print(tweetURL)
+                    # print(tweetPic)
+                    # print(tweetURL)
 
-                # reading tweetPic url and converting to file object
-                if noPic == False:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(tweetPic) as resp:
-                            if resp.status != 200:
-                                noPic = True
-                            data = io.BytesIO(await resp.read())
+                    # reading tweetPic url and converting to file object
+                    if noPic == False:
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(tweetPic) as resp:
+                                if resp.status != 200:
+                                    noPic = True
+                                data = io.BytesIO(await resp.read())
 
-                # if now < tweetTime:  # should be <
+                    # if now < tweetTime:  # should be <
 
-                    # sending to multiple channels
-                try:
-                    for j in range(len(values)):  # iterate through user_list
-                        user_id = (values[j].get("user_id"))
-                        channel_id = int(values[j].get("channel_id"))
+                        # sending to multiple channels
+                    try:
+                        for j in range(len(values)):  # iterate through user_list
+                            user_id = (values[j].get("user_id"))
+                            channel_id = int(values[j].get("channel_id"))
 
-                        if channel_id in userDict:
-                            userDict[channel_id].append(user_id)
+                            if channel_id in userDict:
+                                userDict[channel_id].append(user_id)
+                            else:
+                                userDict[channel_id] = [user_id]
+                    except TypeError:  # if arr = [], continue
+                        pass
+
+                    # print(noPic)
+
+                    for ch in userDict:
+                        channel = client.get_channel(id=ch)
+                        for i in range(len(userDict[ch])):
+                            mention_str += "<@" + str(userDict[ch][i]) + "> "
+                        if noPic == True:
+                            await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str)
                         else:
-                            userDict[channel_id] = [user_id]
-                except TypeError:  # if arr = [], continue
-                    pass
-
-                # print(noPic)
-
-                for ch in userDict:
-                    channel = client.get_channel(id=ch)
-                    for i in range(len(userDict[ch])):
-                        mention_str += "<@" + str(userDict[ch][i]) + "> "
-                    if noPic == True:
-                        await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str)
-                    else:
-                        await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
-                # except IndexError: #values = []
-                #     pass
+                            await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
+                    # except IndexError: #values = []
+                    #     pass
     except tweepy.errors.TweepyException:
         print('twitter is overloaded')
         tweetScrape.change_interval(minutes=2)
@@ -934,12 +949,12 @@ async def embedMsg(message, hList, length):
     await message.channel.send(embed=embedVar)
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
+
+
 argparser = argparse.ArgumentParser(
     formatter_class=argparse.RawTextHelpFormatter)
 argparser.add_argument(
     "--eng", action="store_true", default=False
-
-
 )
 argparser.add_argument(
     "--date", action="store_true", default=False
