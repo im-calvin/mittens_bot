@@ -252,11 +252,11 @@ async def tweetScrape():
             mention_str = ''
             noPic = False
 
-            # tweets_list = TWClient.get_users_tweets(id=keys, expansions=[
-            #                                         "attachments.media_keys", "referenced_tweets.id", "author_id"], since_id=twDict[keys])
-            # debugging line:
             tweets_list = TWClient.get_users_tweets(id=keys, expansions=[
-                "attachments.media_keys", "referenced_tweets.id", "author_id"])
+                                                    "attachments.media_keys", "referenced_tweets.id", "author_id"], since_id=twDict[keys])
+            # debugging line:
+            # tweets_list = TWClient.get_users_tweets(id=keys, expansions=[
+            #     "attachments.media_keys", "referenced_tweets.id", "author_id"])
 
             if tweets_list.data != None:
                 tweetID = tweets_list.data[0].id
