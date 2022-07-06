@@ -37,8 +37,9 @@ access_token_secret = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
 bearer_token = os.getenv('BEARER_TOKEN')
 deepl_token = os.getenv('DEEPL')
 
-
-client = discord.Client()
+intents = discord.Intents.default()
+intents.reactions = True
+client = discord.Client(intents=intents)
 intents = discord.Intents.all()
 TWClient = tweepy.Client(bearer_token)
 translate_client = translate.Client.from_service_account_json(
@@ -47,6 +48,7 @@ auth = tweepy.OAuth1UserHandler(
     consumer_key, consumer_secret, access_token, access_token_secret)
 api = tweepy.API(auth)
 dlTrans = deepl.Translator(deepl_token)
+
 
 all_members_list = []
 with open('holo_members.txt', 'rb') as f:
@@ -78,7 +80,11 @@ def createTweet():
             # twDict value should be most recent id from x user
             tweets_list = api.user_timeline(
                 user_id=keys, count=1, tweet_mode='extended')
-            twDict[keys] = tweets_list[0].id_str
+            try:
+                twDict[keys] = tweets_list[0].id_str
+            except IndexError:  # if being run from tweetScrape error and user has no tweets
+                twDict[keys] = {}
+
     except json.decoder.JSONDecodeError:  # if twitter.json empty
         print('twitter.json is empty')
         pass
@@ -270,7 +276,7 @@ async def tweetScrape():
                 tweetID_list = tweets_list.data
                 twDict[keys] = tweetID_list[0].id
                 # in case more than one tweet within 30s
-                for i in range(len(tweetID_list)):
+                for i in reversed(range(len(tweetID_list))):
                     userDict = {}
                     mention_str = ''
                     noPic = False
@@ -359,8 +365,7 @@ async def tweetScrape():
                             await channel.send(content=header_str + tweetTxt + tweetURL + '\n' + mention_str)
                         else:
                             await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
-                    # except IndexError: #values = []
-                    #     pass
+
     except tweepy.errors.TweepyException:
         print('twitter is overloaded')
         tweetScrape.change_interval(minutes=2)
