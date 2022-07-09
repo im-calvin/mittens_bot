@@ -25,6 +25,7 @@ from pytz import timezone
 from jisho_api.word import Word
 from jisho_api.kanji import Kanji
 from jisho_api.tokenize import Tokens
+from lyricsgenius import Genius
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -36,6 +37,8 @@ access_token = os.getenv('TWITTER_ACCESS_TOKEN')
 access_token_secret = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
 bearer_token = os.getenv('BEARER_TOKEN')
 deepl_token = os.getenv('DEEPL')
+genius_client = os.getenv('LYRICS_CLIENT')
+genius_secret = os.getenv('LYRICS_SECRET')
 
 intents = discord.Intents.default()
 intents.reactions = True
@@ -48,6 +51,7 @@ auth = tweepy.OAuth1UserHandler(
     consumer_key, consumer_secret, access_token, access_token_secret)
 api = tweepy.API(auth)
 dlTrans = deepl.Translator(deepl_token)
+genius = Genius(genius_client)
 
 
 all_members_list = []
@@ -67,7 +71,7 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 twDict = {}
-translMode = 'google'
+translMode = 'deepl'
 
 
 def createTweet():
@@ -180,6 +184,9 @@ async def on_message(message):
         elif command == "kana":
             await kana(message)
 
+        elif command == "lyrics":
+            await lyrics(message, msg)
+
         else:
             await message.channel.send('Unknown command')
 
@@ -218,7 +225,19 @@ async def on_message_edit(before, after):
     await message.edit(content=transl_msg)
 
 
+async def lyrics(message, msg):
+    msg = ' '.join(msg[1:]).strip()
+    lyrics = []
+    songs = genius.search_songs(msg)
+    for song in songs['hits']:
+        url = song['result']['url']
+        song_lyrics = genius.lyrics(song_url=url)
+        lyrics.append(song_lyrics)
+    await message.channel.send(lyrics[0])
+
 # twitter follow
+
+
 async def tweetAdd(message, msg):
     vtuber_channel = ' '.join(msg[1:]).strip()
     if vtuber_channel == '':
@@ -245,7 +264,7 @@ async def tweetRemove(message, msg):
     await duplicate(message, 'twitter.json', id, 'remove')
 
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=60)
 async def tweetScrape():
     try:
         try:
