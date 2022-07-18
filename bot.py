@@ -233,7 +233,14 @@ async def lyrics(message, msg):
         url = song['result']['url']
         song_lyrics = genius.lyrics(song_url=url)
         lyrics.append(song_lyrics)
-    await message.channel.send(lyrics[0])
+    try:
+        sendArr = lyrics[0].split('\n\n')
+    except IndexError:  # assume no match
+        await message.channel.send('Song not found')
+        return
+    # await embedMsg(message, sendArr, len(sendArr))
+    for i in range(len(sendArr)):
+        await message.channel.send(sendArr[i])
 
 # twitter follow
 
