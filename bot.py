@@ -2,6 +2,8 @@
 import os
 import re
 import discord
+import math
+from disputils import EmbedPaginator, pagination
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
 import json
@@ -12,7 +14,7 @@ import deepl
 
 from furigana.furigana import print_plaintext
 from holo_schedule import main
-from discord.ext import commands, tasks
+from discord.ext import commands, tasks, menus
 import argparse
 import json
 import asyncio
@@ -890,14 +892,14 @@ async def myschedule(message):
         if holo_schedule[i]["member"] in follow_list:
             personalizedFollow.append(holo_schedule[i])
 
-    await embedMsg(message, personalizedFollow, len(personalizedFollow))
+    await embedMsg(message, personalizedFollow)
 
 
 # gets holo_schedule discord-ready
 async def schedule(message):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
-    await embedMsg(message, holo_schedule, int(10))
+    await embedMsg(message, holo_schedule)
 
 
 async def specificSchedule(message, msg):
@@ -922,7 +924,7 @@ async def specificSchedule(message, msg):
         if scheduleList == []:
             await message.channel.send("**" + vtuber_channel + "** does not have any scheduled streams")
             return
-        await embedMsg(message, scheduleList, len(scheduleList))
+        await embedMsg(message, scheduleList)
 
     else:
         await message.channel.send("Couldn't find the channel you specified.")
@@ -940,44 +942,52 @@ async def regionSchedule(message, msg):
     if scheduleList == []:
         await message.channel.send("holo{} has no scheduled streams".format(msg))
         return
-    await embedMsg(message, scheduleList, len(scheduleList))
+    await embedMsg(message, scheduleList)
     return
 
+bot = commands.Bot(command_prefix='$')
 
-async def embedMsg(message, hList, length):
-    embedVar = discord.Embed(title="Schedule", color=0xfcc174)
-    # what if there are x<10 things on the schedule
-    try:
-        hList[length]
-    except IndexError:
-        length = len(hList)
-    for i in range(length):
-        holo_time = hList[i].get("time").split(':')
-        holo_date = hList[i].get("date")
-        unix_time = time_convert(holo_time, holo_date)
-        time_str = "<t:" + str(unix_time) + ">"
-        relative_time_str = "<t:" + str(unix_time) + ":R>"
-        member_str = hList[i].get("member") + " "
-        title_str = hList[i].get("title")
-        url = hList[i].get("url")
 
-        for i in range(len(title_str)):
-            m = re.search('【(.+?)】', title_str)
-            if m:
-                title_str = m.group(1)
+async def embedMsg(message, hList):
+    # embedVar = discord.Embed(title="Schedule", color=0xfcc174)
+    length = len(hList)
+    embeds = []
 
-        if title_str == "":
-            title_str = "Link to the stream"
+    for j in range(math.ceil(length/10)):
+        embeds.append(discord.Embed(title="Schedule", color=0xfcc174))
+        for i in range(10):
+            try:
+                i = j*10+i
+                holo_time = hList[i].get("time").split(':')
+                holo_date = hList[i].get("date")
+                unix_time = time_convert(holo_time, holo_date)
+                time_str = "<t:" + str(unix_time) + ">"
+                relative_time_str = "<t:" + str(unix_time) + ":R>"
+                member_str = hList[i].get("member") + " "
+                title_str = hList[i].get("title")
+                url = hList[i].get("url")
 
-        # print(unix_time)
-        if int(ttime.time()) > unix_time:
-            relative_time_str = "`Now Airing!`"
-            # print(mktime(datetime.now(timezone('UTC')).timetuple()))
+                for i in range(len(title_str)):
+                    m = re.search('【(.+?)】', title_str)
+                    if m:
+                        title_str = m.group(1)
 
-        embedVar.add_field(name='{} / {}'.format(
-            time_str, relative_time_str), value='`{}`: [{}]({})'.format(member_str, title_str, url), inline=False)
+                if title_str == "":
+                    title_str = "Link to the stream"
 
-    await message.channel.send(embed=embedVar)
+                # print(unix_time)
+                if int(ttime.time()) > unix_time:
+                    relative_time_str = "`Now Airing!`"
+                    # print(mktime(datetime.now(timezone('UTC')).timetuple()))
+
+                embeds[j].add_field(name='{} / {}'.format(
+                    time_str, relative_time_str), value='`{}`: [{}]({})'.format(member_str, title_str, url), inline=False)
+            except IndexError:
+                break
+
+    paginator = EmbedPaginator(client=client, pages=embeds, control_emojis=pagination.ControlEmojis(
+        first=None, last=None, close=None))
+    await paginator.run(users=[], channel=message.channel)
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
 
