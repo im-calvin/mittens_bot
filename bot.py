@@ -14,7 +14,7 @@ import deepl
 
 from furigana.furigana import print_plaintext
 from holo_schedule import main
-from discord.ext import commands, tasks, menus
+from discord.ext import commands, tasks
 import argparse
 import json
 import asyncio
