@@ -892,6 +892,10 @@ async def myschedule(message):
         if holo_schedule[i]["member"] in follow_list:
             personalizedFollow.append(holo_schedule[i])
 
+    if personalizedFollow == []:
+        await message.channel.send('Your oshi has no scheduled streams <:kiaraangy:987566109790208030>')
+        return
+
     await embedMsg(message, personalizedFollow)
 
 
