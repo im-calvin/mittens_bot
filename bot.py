@@ -235,14 +235,76 @@ async def lyrics(message, msg):
         url = song['result']['url']
         song_lyrics = genius.lyrics(song_url=url)
         lyrics.append(song_lyrics)
+
+    emoji_numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣",
+                     "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
+    songName = []
+    # counter = 1
+
+    for i in range(len(lyrics)):
+        songName.append(lyrics[i].split('Lyrics')[0])
+        # x = counter
+        lyrics_str = '\n'.join(songName)
+        # counter += 1
+
+    sentInput = await message.channel.send('Please pick a song:\n{}'.format(lyrics_str))
+    shortNum = min(len(songName), len(emoji_numbers))
+    for i in range(shortNum):
+        await sentInput.add_reaction(emoji_numbers[i])
+
+    def check(reaction, user):
+        return user == message.author and str(reaction.emoji) in emoji_numbers
+
     try:
-        sendArr = lyrics[0].split('\n\n')
+        input = await client.wait_for('reaction_add', timeout=60.0, check=check)
+    except asyncio.TimeoutError:
+        await message.channel.send('Timeout')
+
+    emoteInput = (input[0].emoji)
+
+    def emoteChanger(emoteInput):
+        if emoteInput == "0️⃣":
+            return 0
+        elif emoteInput == "1️⃣":
+            return 1
+        elif emoteInput == "2️⃣":
+            return 2
+        elif emoteInput == "3️⃣":
+            return 3
+        elif emoteInput == "4️⃣":
+            return 4
+        elif emoteInput == "5️⃣":
+            return 5
+        elif emoteInput == "6️⃣":
+            return 6
+        elif emoteInput == "6️7️⃣":
+            return 7
+        elif emoteInput == "8️⃣":
+            return 8
+        elif emoteInput == "9️⃣":
+            return 9
+
+    songNum = emoteChanger(emoteInput)
+    song_str = songName[songNum]
+
+    try:
+        sendArr = lyrics[songNum].split('\n\n')
     except IndexError:  # assume no match
         await message.channel.send('Song not found')
         return
     # await embedMsg(message, sendArr, len(sendArr))
+    # title_str = '\n'.split(sendArr[0], 1)[0]
+
+    embeds = []
+
     for i in range(len(sendArr)):
-        await message.channel.send(sendArr[i])
+        embeds.append(discord.Embed(title=songName[songNum], color=0xfcc174))
+        embeds[i].add_field(name='\u200b', value=sendArr[i])
+
+    paginator = EmbedPaginator(
+        client=client, pages=embeds, control_emojis=pagination.ControlEmojis(close=None))
+    await paginator.run(users=[], channel=message.channel)
+
 
 # twitter follow
 
