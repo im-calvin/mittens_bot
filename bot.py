@@ -240,14 +240,16 @@ async def lyrics(message, msg):
                      "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
     songName = []
     # counter = 1
+    embedVar = discord.Embed(title="Which song?", color=0xfcc174)
 
     for i in range(len(lyrics)):
         songName.append(lyrics[i].split('Lyrics')[0])
         # x = counter
-        lyrics_str = '\n'.join(songName)
+        embedVar.add_field(name=i, value=songName[i], inline=False)
+        # lyrics_str = '\n'.join(songName)
         # counter += 1
 
-    sentInput = await message.channel.send('Please pick a song:\n{}'.format(lyrics_str))
+    sentInput = await message.channel.send(embed=embedVar)
     shortNum = min(len(songName), len(emoji_numbers))
     for i in range(shortNum):
         await sentInput.add_reaction(emoji_numbers[i])
