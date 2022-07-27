@@ -260,7 +260,8 @@ async def lyrics(message, msg):
     try:
         input = await client.wait_for('reaction_add', timeout=60.0, check=check)
     except asyncio.TimeoutError:
-        await message.channel.send('Timeout')
+        await message.channel.send('Song selection timed out')
+        return
 
     emoteInput = (input[0].emoji)
 
@@ -287,7 +288,6 @@ async def lyrics(message, msg):
             return 9
 
     songNum = emoteChanger(emoteInput)
-    song_str = songName[songNum]
 
     try:
         sendArr = lyrics[songNum].split('\n\n')
