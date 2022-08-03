@@ -366,8 +366,8 @@ async def tweetScrape():
                 return
 
             # debugging line:
-            tweets_list = TWClient.get_users_tweets(id=keys, expansions=[
-                "attachments.media_keys", "referenced_tweets.id", "author_id"])
+            # tweets_list = TWClient.get_users_tweets(id=keys, expansions=[
+            #     "attachments.media_keys", "referenced_tweets.id", "author_id"])
 
             if tweets_list.data != None:
                 # if tweets_list.data == None:
