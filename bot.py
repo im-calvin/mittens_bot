@@ -73,7 +73,7 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 twDict = {}
-translMode = 'google'
+
 
 
 def createTweet():
@@ -181,7 +181,7 @@ async def on_message(message):
             await tweetRemove(message, msg)
 
         elif command == "transl":
-            await transl(message, msg)
+            translMode = await transl(message, msg, translMode="google")
 
         elif command == "kana":
             await kana(message)
@@ -191,7 +191,7 @@ async def on_message(message):
 
         else:
             await message.channel.send('Unknown command')
-
+            
         return
 
     if translMode == 'deepl':
@@ -576,17 +576,18 @@ def deepl_translator(message):
         return "bruh what"
 
 
-async def transl(message, msg):  # translmode
-    global translMode
+async def transl(message, msg, translMode):  # translmode
 
     msg = ' '.join(msg[1:]).strip()
     if msg == 'deepl':
         translMode = 'deepl'
         await message.channel.send('Translation client set to deepl')
+        return translMode
         # return 'deepl'
     elif msg == 'google':
         translMode = 'google'
         await message.channel.send('Translation client set to google')
+        return translMode
         # return 'google'
     else:
         await message.channel.send('Choose either \'deepl\' or \'google\'')
