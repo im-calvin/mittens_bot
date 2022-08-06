@@ -130,6 +130,7 @@ user_list = []
 
 @client.event
 async def on_message(message):
+    translMode = 'google'
 
     flag = await exceptions(message)
     if flag == "bruh what":
