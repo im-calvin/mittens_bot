@@ -301,6 +301,9 @@ async def lyrics(message, msg):
     # await embedMsg(message, sendArr, len(sendArr))
     # title_str = '\n'.split(sendArr[0], 1)[0]
 
+    sendArr[len(sendArr)-1] = re.sub("[0-9]*Embed",
+                                     "", sendArr[len(sendArr)-1])
+
     embeds = []
 
     for i in range(len(sendArr)):
