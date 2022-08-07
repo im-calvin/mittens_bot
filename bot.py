@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
 import json
 import aiohttp
+import asyncio
 import io
 import tweepy
 import deepl
@@ -227,15 +228,18 @@ async def on_message_edit(before, after):
     message = await channel.fetch_message(bot_msg.id)
     await message.edit(content=transl_msg)
 
+async def request_lyrics(url):
+    async with aiohttp.ClientSession() as session:
+        async with genius.lyrics(song_url=url) as song_lyrics:
+            return await song_lyrics
 
 async def lyrics(message, msg):
     msg = ' '.join(msg[1:]).strip()
-    lyrics = []
     songs = genius.search_songs(msg)
+    requests = []
     for song in songs['hits']:
-        url = song['result']['url']
-        song_lyrics = genius.lyrics(song_url=url)
-        lyrics.append(song_lyrics)
+        requests.append(request_lyrics(song['result']['url']))
+    lyrics = await asyncio.gather(requests)
 
     emoji_numbers = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣",
                      "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
