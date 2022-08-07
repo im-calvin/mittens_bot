@@ -229,9 +229,7 @@ async def on_message_edit(before, after):
     await message.edit(content=transl_msg)
 
 async def request_lyrics(url):
-    async with aiohttp.ClientSession() as session:
-        async with genius.lyrics(song_url=url) as song_lyrics:
-            return await song_lyrics
+    return await genius.lyrics(song_url=url)
 
 async def lyrics(message, msg):
     msg = ' '.join(msg[1:]).strip()
