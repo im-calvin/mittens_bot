@@ -82,7 +82,7 @@ def main(args, holo_list):
             # updating json file:
             holo_list.append({
                 "time": time,
-                "member": member,
+                "member": [member],
                 "url": url,
                 "title": title_list[i],
                 "date": "today",
@@ -112,7 +112,7 @@ def main(args, holo_list):
 
             holo_list.append({
                 "time": time,
-                "member": member,
+                "member": [member],
                 "url": url,
                 "title": title_list[i],
                 "date": "tomorrow",

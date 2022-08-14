@@ -62,7 +62,10 @@
     "Kureiji Ollie": [],
     "Anya Melfissa": [],
     "Pavolia Reine": [],
-    "Vestia Zeta": [],
+    "Vestia Zeta": [      {
+      "channel_id": 993032295902629888,
+      "user_id": 182310565333565440
+    }],
     "Kaela Kovalskia": [],
     "Kobo Kanaeru": [],
     "holoID": [],
@@ -77,10 +80,6 @@
       }
     ],
     "Takanashi Kiara": [
-      {
-        "channel_id": 993032295902629888,
-        "user_id": 277908415857295361
-      },
       {
         "channel_id": 993032295902629888,
         "user_id": 182310565333565440
@@ -110,6 +109,10 @@
       {
         "channel_id": 993032295902629888,
         "user_id": 277908415857295361
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
       }
     ],
     "holoEN": [],
@@ -129,12 +132,20 @@
       {
         "channel_id": 993032295902629888,
         "user_id": 182310565333565440
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
       }
     ],
     "Ouro Kronii": [
       {
         "channel_id": 993032295902629888,
         "user_id": 277908415857295361
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
       }
     ],
     "Nanashi Mumei": [

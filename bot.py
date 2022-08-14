@@ -75,7 +75,6 @@ holo_list = []
 twDict = {}
 
 
-
 def createTweet():
     global twDict
     try:
@@ -192,7 +191,7 @@ async def on_message(message):
 
         else:
             await message.channel.send('Unknown command')
-            
+
         return
 
     if translMode == 'deepl':
@@ -813,31 +812,50 @@ async def get_holo_schedule():
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
-    tomorrow_list = (main.main(args, holo_list=[]))
+    tomorrow_list = (main.main(args, today_list))
+
+    collabTitleUpdater()
 
     # this appends
 
-    try:
-        joinedList = today_list + tomorrow_list
-    except TypeError:  # if tmr_list is empty
-        joinedList = today_list
+    # try:
+    #     joinedList = today_list + tomorrow_list
+    # except TypeError:  # if tmr_list is empty
+    #     joinedList = today_list
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
-    for i in range(len(joinedList)):
+    for i in range(len(tomorrow_list)):
         for j in range(len(holo_schedule)):
             # if the new list entry is the exact same as the old list
-            if joinedList[i].get("url") in list_of_old_url and holo_schedule[j]["mentioned"] == True:
-                joinedList[i]["mentioned"] = True
+            if tomorrow_list[i].get("url") in list_of_old_url and holo_schedule[j]["mentioned"] == True:
+                tomorrow_list[i]["mentioned"] = True
                 # only if live-pinged is true, update the new list for live-pinged to be true
-            if holo_schedule[j].get("url") == joinedList[i].get("url") and holo_schedule[j]["live_pinged"] == True:
-                joinedList[i]["live_pinged"] = True
-
+            if holo_schedule[j].get("url") == tomorrow_list[i].get("url") and holo_schedule[j]["live_pinged"] == True:
+                tomorrow_list[i]["live_pinged"] = True
     with open('holo_schedule.json', 'w') as f:
-        json.dump(joinedList, f, indent=4)
+        json.dump(tomorrow_list, f, indent=4)
+
+    # collabTitleUpdater()
 
     # print('holo_schedule.json updated')
 
     await new_schedule()
+
+
+def collabTitleUpdater():
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+        for i in range(len(holo_schedule)):
+            title_str = holo_schedule[i]['title']
+
+            for keys, values in nickNameDict.items():
+                for j in range(len(values)):
+                    # successfully found matching str
+                    if title_str.find(values[j]) != -1:
+                        holo_schedule[i]['member'].append(keys)
+    with open('holo_schedule.json', 'w') as f:
+        json.dump(holo_schedule, f, indent=4)
+
 
 # pinging portion
 
@@ -851,8 +869,10 @@ async def new_schedule():
 
     # list of dicts containing channel_id, user_id
     for i in range(len(holo_schedule)):  # iterate through holo_schedule
-        vtuber_channel = holo_schedule[i].get("member")
-        user_list = profiles.get(vtuber_channel)
+        vtuber_channel = holo_schedule[i].get("member")  # list of vTuber names
+        user_list = []  # list of userIDs associated with vtuberCh
+        for j in range(len(vtuber_channel)):
+            user_list.append(profiles.get(vtuber_channel[j]))
         userDict = {}
         mention_str = ''
 
@@ -861,7 +881,7 @@ async def new_schedule():
         unix_time = time_convert(holo_time, holo_date)
         time_str = "<t:" + str(unix_time) + ">"
         relative_time_str = "<t:" + str(unix_time) + ":R>"
-        header_str = "**" + vtuber_channel + "** scheduled a stream at "
+        header_str = "**" + vtuber_channel[0] + "** scheduled a stream at "
         title_str = holo_schedule[i].get("title")
         url = holo_schedule[i].get("url")
 
@@ -871,14 +891,16 @@ async def new_schedule():
             with open('holo_schedule.json', 'w') as h:
                 json.dump(holo_schedule, h, indent=4)
             try:
-                for j in range(len(user_list)):  # iterate through user_list
-                    user_id = (user_list[j].get("user_id"))
-                    channel_id = int(user_list[j].get("channel_id"))
+                for k in range(len(user_list)):  # users = 1st layer of 2d array
+                    # iterate through user_list
+                    for j in range(len(user_list[k])):
+                        user_id = (user_list[k][j].get("user_id"))
+                        channel_id = int(user_list[k][j].get("channel_id"))
 
-                    if channel_id in userDict:
-                        userDict[channel_id].append(user_id)
-                    else:
-                        userDict[channel_id] = [user_id]
+                        if channel_id in userDict:
+                            userDict[channel_id].append(user_id)
+                        else:
+                            userDict[channel_id] = [user_id]
             except TypeError:  # if arr = [], continue
                 continue
 
@@ -902,11 +924,11 @@ async def now_streaming():
     # you really only have to check the latest 5. iterating through holo_schedule
     for i in range(len(holo_schedule)):
         vtuber_channel = holo_schedule[i].get("member")
-        user_list = profiles.get(vtuber_channel)
+        user_list = profiles.get(vtuber_channel[0])
         userDict = {}
         mention_str = ''
 
-        header_str = "**" + vtuber_channel + "** is now live! \n"
+        header_str = "**" + vtuber_channel[0] + "** is now live! \n"
         title_str = holo_schedule[i].get("title")
         url = holo_schedule[i].get("url")
 
@@ -1149,6 +1171,20 @@ holo_dict = {
     'EN': holoEN,
     'ID': holoID,
     'STARS': holoSTARS
+}
+
+nickNameDict = {
+    "Gawr Gura": ["Gawr", "Gura", "Goombus"],
+    "Ninomae Ina'nis": ["Ninomae", "Ina'nis", "Ina"],
+    "Mori Calliope": ["Mori", "Calliope", "Calli"],
+    "Watson Amelia": ["Watson", "Amelia", "Ame"],
+    "Takanashi Kiara": ["Takanashi", "Kiara"],
+    "Nanashi Mumei": ["Nanashi", "Mumei"],
+    "Ceres Fauna": ["Ceres", "Fauna", "Faufau"],
+    "Ouro Kronii": ["Ouro", "Kronii"],
+    "Hakos Baelz": ["Hakos", "Baelz", "Bae"],
+    "Tsukumo Sana": ["Tsukumo", "Sana"],
+    "IRyS": ["IRyS"]
 }
 
 client.run(TOKEN)
