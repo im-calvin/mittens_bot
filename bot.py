@@ -1053,7 +1053,7 @@ async def specificSchedule(message, msg):
         # create list of holo_schedule for specific member
         scheduleList = []
         for i in range(len(holo_schedule)):
-            if holo_schedule[i]["member"] == vtuber_channel:
+            if holo_schedule[i]["member"][0] == vtuber_channel:
                 scheduleList.append(holo_schedule[i])
         if scheduleList == []:
             await message.channel.send("**" + vtuber_channel + "** does not have any scheduled streams")
@@ -1071,7 +1071,7 @@ async def regionSchedule(message, msg):
     scheduleList = []
 
     for i in range(len(holo_schedule)):
-        if holo_schedule[i]["member"] in regionList:
+        if holo_schedule[i]["member"][0] in regionList:
             scheduleList.append(holo_schedule[i])
     if scheduleList == []:
         await message.channel.send("holo{} has no scheduled streams".format(msg))
@@ -1097,7 +1097,7 @@ async def embedMsg(message, hList):
                 unix_time = time_convert(holo_time, holo_date)
                 time_str = "<t:" + str(unix_time) + ">"
                 relative_time_str = "<t:" + str(unix_time) + ":R>"
-                member_str = hList[i].get("member") + " "
+                member_str = hList[i].get("member")[0] + " "
                 title_str = hList[i].get("title")
                 url = hList[i].get("url")
 
