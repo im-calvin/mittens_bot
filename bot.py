@@ -6,6 +6,11 @@ import math
 from disputils import EmbedPaginator, pagination
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
+import googleapiclient.errors
+import requests
+import google
 import json
 import aiohttp
 import io
@@ -41,6 +46,9 @@ bearer_token = os.getenv('BEARER_TOKEN')
 deepl_token = os.getenv('DEEPL')
 genius_client = os.getenv('LYRICS_CLIENT')
 genius_secret = os.getenv('LYRICS_SECRET')
+YTClientID = os.getenv('YT_CLIENT_ID')
+YTClientSecret = os.getenv('YT_CLIENT_SECRET')
+refresh_token = os.getenv('YT_REFRESH_TOKEN')
 
 intents = discord.Intents.default()
 intents.reactions = True
@@ -54,6 +62,33 @@ auth = tweepy.OAuth1UserHandler(
 api = tweepy.API(auth)
 dlTrans = deepl.Translator(deepl_token)
 genius = Genius(genius_client)
+
+
+def refreshToken(client_id, client_secret, refresh_token):
+    params = {
+        "grant_type": "refresh_token",
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token
+    }
+
+    authorization_url = "https://oauth2.googleapis.com/token"
+
+    r = requests.post(authorization_url, data=params)
+
+    if r.ok:
+        return r.json()['access_token']
+    else:
+        return None
+
+
+# // Call refreshToken which creates a new Access Token
+access_token = refreshToken(YTClientID, YTClientSecret, refresh_token)
+
+# // Pass the new Access Token to Credentials() to create new credentials
+credentials = google.oauth2.credentials.Credentials(access_token)
+YTClient = googleapiclient.discovery.build(
+    'youtube', 'v3', credentials=credentials)
 
 
 all_members_list = []
@@ -835,8 +870,6 @@ async def get_holo_schedule():
     with open('holo_schedule.json', 'w') as f:
         json.dump(tomorrow_list, f, indent=4)
 
-    # collabTitleUpdater()
-
     # print('holo_schedule.json updated')
 
     await new_schedule()
@@ -847,12 +880,23 @@ def collabTitleUpdater():
         holo_schedule = json.load(f)
         for i in range(len(holo_schedule)):
             title_str = holo_schedule[i]['title']
+            url = holo_schedule[i]['url']
+            index = url.find('=')
+            id = url[index+1:]
+
+            request = YTClient.videos().list(
+                part="snippet",
+                id=id)
+            response = request.execute()
+            description = response['items'][0]['snippet']['description']
+            print(description)
 
             for keys, values in nickNameDict.items():
                 for j in range(len(values)):
                     # successfully found matching str
                     if title_str.find(values[j]) != -1:
                         holo_schedule[i]['member'].append(keys)
+
     with open('holo_schedule.json', 'w') as f:
         json.dump(holo_schedule, f, indent=4)
 
