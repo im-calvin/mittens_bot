@@ -849,7 +849,7 @@ async def get_holo_schedule():
     # flattenは不正解だけどこんな感じですね
     tomorrow_list = (main.main(args, today_list))
 
-    collabTitleUpdater()
+    scheduleWithCollabs = collabTitleUpdater()
 
     # this appends
 
@@ -861,10 +861,11 @@ async def get_holo_schedule():
 
     for i in range(len(tomorrow_list)):
         for j in range(len(holo_schedule)):
+            tomorrow_list[i]['member'] = scheduleWithCollabs[i]['member']
             # if the new list entry is the exact same as the old list
             if tomorrow_list[i].get("url") in list_of_old_url and holo_schedule[j]["mentioned"] == True:
                 tomorrow_list[i]["mentioned"] = True
-                # only if live-pinged is true, update the new list for live-pinged to be true
+            # only if live-pinged is true, update the new list for live-pinged to be true
             if holo_schedule[j].get("url") == tomorrow_list[i].get("url") and holo_schedule[j]["live_pinged"] == True:
                 tomorrow_list[i]["live_pinged"] = True
     with open('holo_schedule.json', 'w') as f:
@@ -882,24 +883,24 @@ def collabTitleUpdater():
             title_str = holo_schedule[i]['title']
             url = holo_schedule[i]['url']
             index = url.find('=')
-            id = url[index+1:]
+            if index != -1:  # if yt link (not a joqr)
+                id = url[index+1:]
+                request = YTClient.videos().list(
+                    part="snippet",
+                    id=id)
+                response = request.execute()
+                description = response['items'][0]['snippet']['description']
+                # print(description)
 
-            request = YTClient.videos().list(
-                part="snippet",
-                id=id)
-            response = request.execute()
-            description = response['items'][0]['snippet']['description']
-            print(description)
-
-            for keys, values in nickNameDict.items():
-                for j in range(len(values)):
-                    # successfully found matching str
-                    if title_str.find(values[j]) != -1:
-                        holo_schedule[i]['member'].append(keys)
+                for keys, values in nickNameDict.items():
+                    for j in range(len(values)):
+                        # successfully found matching str
+                        if description.find(values[j]) != -1:
+                            holo_schedule[i]['member'].append(keys)
 
     with open('holo_schedule.json', 'w') as f:
         json.dump(holo_schedule, f, indent=4)
-
+    return holo_schedule
 
 # pinging portion
 
@@ -1218,17 +1219,18 @@ holo_dict = {
 }
 
 nickNameDict = {
-    "Gawr Gura": ["Gawr", "Gura", "Goombus"],
-    "Ninomae Ina'nis": ["Ninomae", "Ina'nis", "Ina"],
-    "Mori Calliope": ["Mori", "Calliope", "Calli"],
-    "Watson Amelia": ["Watson", "Amelia", "Ame"],
-    "Takanashi Kiara": ["Takanashi", "Kiara"],
-    "Nanashi Mumei": ["Nanashi", "Mumei"],
-    "Ceres Fauna": ["Ceres", "Fauna", "Faufau"],
-    "Ouro Kronii": ["Ouro", "Kronii"],
-    "Hakos Baelz": ["Hakos", "Baelz", "Bae"],
-    "Tsukumo Sana": ["Tsukumo", "Sana"],
-    "IRyS": ["IRyS"]
+    "Gawr Gura": ["@Gawr Gura Ch. hololive-EN", "https://www.youtube.com/channel/UCoSrY_IQQVpmIRZ9Xf-y93g"],
+    "Ninomae Ina'nis": ["@Ninomae Ina'nis Ch. hololive-EN", "https://www.youtube.com/channel/UCMwGHR0BTZuLsmjY_NT5Pwg"],
+    "Mori Calliope": ["@Mori Calliope Ch. hololive-EN", "https://www.youtube.com/channel/UCL_qhgtOy0dy1Agp8vkySQg"],
+    "Watson Amelia": ["@Watson Amelia Ch. hololive-EN", "https://www.youtube.com/channel/UCyl1z3jo3XHR1riLFKG5UAg"],
+    "Takanashi Kiara": ["@Takanashi Kiara Ch. hololive-EN", "https://www.youtube.com/channel/UCHsx4Hqa-1ORjQTh9TYDhww"],
+    "Nanashi Mumei": ["@Nanashi Mumei Ch. hololive-EN", "https://www.youtube.com/channel/UC3n5uGu18FoCy23ggWWp8tA"],
+    "Ceres Fauna": ["@Ceres Fauna Ch. hololive-EN", "https://www.youtube.com/channel/UCO_aKKYxn4tvrqPjcTzZ6EQ"],
+    "Ouro Kronii": ["@Ouro Kronii Ch. hololive-EN", "https://www.youtube.com/channel/UCmbs8T6MWqUHP1tIQvSgKrg"],
+    "Hakos Baelz": ["@Hakos Baelz Ch. hololive-EN", "https://www.youtube.com/channel/UCgmPnx-EEeOrZSg5Tiw7ZRQ"],
+    # "Tsukumo Sana": ["Tsukumo", "Sana"],
+    "IRyS": ["@IRyS Ch. hololive-EN", "https://www.youtube.com/channel/UC8rcEBzJSleTkf_-agPM20g"],
+    "Shirakami Fubuki": ["@フブキCh。白上フブキ"]
 }
 
 client.run(TOKEN)
