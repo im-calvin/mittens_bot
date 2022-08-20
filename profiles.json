@@ -4,7 +4,12 @@
     "Roboco-san": [],
     "Sakura Miko": [],
     "AZKi": [],
-    "Shirakami Fubuki": [],
+    "Shirakami Fubuki": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 535296448233996288
+      }
+    ],
     "Natsuiro Matsuri": [],
     "Yozora Mel": [],
     "Akai Haato": [],
@@ -51,26 +56,112 @@
     "Utsugi Uyu": [],
     "Hizaki Gamma": [],
     "Minase Rio": [],
-    "holoID": [],
     "Ayunda Risu": [],
     "Moona Hoshinova": [],
     "Airani Iofifteen": [],
     "Kureiji Ollie": [],
     "Anya Melfissa": [],
     "Pavolia Reine": [],
-    "Vestia Zeta": [],
+    "Vestia Zeta": [      {
+      "channel_id": 993032295902629888,
+      "user_id": 182310565333565440
+    }],
     "Kaela Kovalskia": [],
     "Kobo Kanaeru": [],
+    "holoID": [],
+    "Mori Calliope": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ],
+    "Takanashi Kiara": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ],
+    "Ninomae Ina'nis": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ],
+    "Gawr Gura": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ],
+    "Watson Amelia": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ],
     "holoEN": [],
-    "Mori Calliope": [],
-    "Takanashi Kiara": [],
-    "Ninomae Ina'nis": [],
-    "Gawr Gura": [],
-    "Watson Amelia": [],
-    "IRyS": [],
-    "Tsukumo Sana": [],
-    "Ceres Fauna": [],
-    "Ouro Kronii": [],
-    "Nanashi Mumei": [],
-    "Hakos Baelz": []
-}
+    "IRyS": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ],
+    "Tsukumo Sana": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
+      }
+    ],
+    "Ceres Fauna": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
+      }
+    ],
+    "Ouro Kronii": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ],
+    "Nanashi Mumei": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 277908415857295361
+      },
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ],
+    "Hakos Baelz": [
+      {
+        "channel_id": 993032295902629888,
+        "user_id": 182310565333565440
+      }
+    ]
+  }
