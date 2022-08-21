@@ -825,7 +825,10 @@ async def firstScrape():
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list)
     # print('firstScrape done!')
-    await asyncio.sleep(1.0)
+
+    scheduleWithCollabs = collabTitleUpdater()
+
+    # await asyncio.sleep(1.0)
     await new_schedule()
 
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
@@ -917,7 +920,7 @@ async def new_schedule():
         vtuber_channel = holo_schedule[i].get("member")  # list of vTuber names
         user_list = []  # list of userIDs associated with vtuberCh
         for j in range(len(vtuber_channel)):
-            user_list.append(profiles.get(vtuber_channel[j]))
+            user_list.append(profiles[vtuber_channel[j]])
         userDict = {}
         mention_str = ''
 
@@ -937,16 +940,18 @@ async def new_schedule():
                 json.dump(holo_schedule, h, indent=4)
             try:
                 for k in range(len(user_list)):  # users = 1st layer of 2d array
+                    idList = []
                     # iterate through user_list
                     for j in range(len(user_list[k])):
                         user_id = (user_list[k][j].get("user_id"))
                         channel_id = int(user_list[k][j].get("channel_id"))
+                        # if channel_id in userDict:
+                        #     # user_id not in userDict[channel_id]:
+                        idList.append(user_id)
+                        userDict[channel_id] = idList
+                        userDict[channel_id] = list(set(userDict[channel_id]))
 
-                        if channel_id in userDict:
-                            userDict[channel_id].append(user_id)
-                        else:
-                            userDict[channel_id] = [user_id]
-            except TypeError:  # if arr = [], continue
+            except:  # if arr = [], continue
                 continue
 
             for ch in userDict:
@@ -969,7 +974,9 @@ async def now_streaming():
     # you really only have to check the latest 5. iterating through holo_schedule
     for i in range(len(holo_schedule)):
         vtuber_channel = holo_schedule[i].get("member")
-        user_list = profiles.get(vtuber_channel[0])
+        user_list = []  # list of userIDs associated with vtuberCh
+        for j in range(len(vtuber_channel)):
+            user_list.append(profiles[vtuber_channel[j]])
         userDict = {}
         mention_str = ''
 
@@ -987,16 +994,19 @@ async def now_streaming():
                 json.dump(holo_schedule, f, indent=4)
 
             try:
-                for j in range((len(user_list))):
-                    user_id = user_list[j].get("user_id")
-                    channel_id = int(
-                        user_list[j].get("channel_id"))
+                for k in range(len(user_list)):  # users = 1st layer of 2d array
+                    idList = []
+                    # iterate through user_list
+                    for j in range(len(user_list[k])):
+                        user_id = (user_list[k][j].get("user_id"))
+                        channel_id = int(user_list[k][j].get("channel_id"))
+                        # if channel_id in userDict:
+                        #     # user_id not in userDict[channel_id]:
+                        idList.append(user_id)
+                        userDict[channel_id] = idList
+                        userDict[channel_id] = list(set(userDict[channel_id]))
 
-                    if channel_id in userDict:
-                        userDict[channel_id].append(user_id)
-                    else:
-                        userDict[channel_id] = [user_id]
-            except TypeError:  # see above
+            except:  # if arr = [], continue
                 continue
 
             for ch in userDict:
@@ -1201,6 +1211,7 @@ MEMBER_LIST_STR = """
 **Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio
 **HoloID:** Ayunda Risu, Moona Hoshinova, Airani Iofifteen, Kureiji Ollie, Anya Melfissa, Pavolia Reine, Vestia Zeta, Kaela Kovalskia, Kobo Kanaeru
 **HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukumo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hakos Baelz
+**Holostars EN:** Syrios, Vesper, Altare, Dezmond
 """
 
 # MEMBER_LIST_STR = all_members_list
@@ -1231,9 +1242,11 @@ nickNameDict = {
     "Ceres Fauna": ["@Ceres Fauna Ch. hololive-EN", "https://www.youtube.com/channel/UCO_aKKYxn4tvrqPjcTzZ6EQ"],
     "Ouro Kronii": ["@Ouro Kronii Ch. hololive-EN", "https://www.youtube.com/channel/UCmbs8T6MWqUHP1tIQvSgKrg"],
     "Hakos Baelz": ["@Hakos Baelz Ch. hololive-EN", "https://www.youtube.com/channel/UCgmPnx-EEeOrZSg5Tiw7ZRQ"],
-    # "Tsukumo Sana": ["Tsukumo", "Sana"],
     "IRyS": ["@IRyS Ch. hololive-EN", "https://www.youtube.com/channel/UC8rcEBzJSleTkf_-agPM20g"],
-    "Shirakami Fubuki": ["@フブキCh。白上フブキ"]
+    "Shirakami Fubuki": ["@フブキCh。白上フブキ"],
+    "Yuzuki Choco": ["@Choco Ch. 癒月ちょこ"],
+    "La+ Darknesss": ["@Laplus ch. ラプラス・ダークネス - holoX -"],
+    "Momosuzu Nene": ["@Nene Ch.桃鈴ねね"]
 }
 
 client.run(TOKEN)
