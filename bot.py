@@ -1093,6 +1093,9 @@ async def specificSchedule(message, msg):
         return
 
     indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    if indexOfMember == "bruh what":
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
         vtuber_channel = all_members_list[indexOfMember]
         # create list of holo_schedule for specific member
