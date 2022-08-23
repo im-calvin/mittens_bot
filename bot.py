@@ -82,15 +82,6 @@ def refreshToken(client_id, client_secret, refresh_token):
         return None
 
 
-# // Call refreshToken which creates a new Access Token
-access_token = refreshToken(YTClientID, YTClientSecret, refresh_token)
-
-# // Pass the new Access Token to Credentials() to create new credentials
-credentials = google.oauth2.credentials.Credentials(access_token)
-YTClient = googleapiclient.discovery.build(
-    'youtube', 'v3', credentials=credentials)
-
-
 all_members_list = []
 with open('holo_members.txt', 'rb') as f:
     file_content = f.readlines()[1:]  # Ignore first row
@@ -146,6 +137,8 @@ except json.decoder.JSONDecodeError:  # if empty
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
+    refresh_access_token.start()
+    await refresh_access_token()
 
     await firstScrape()
     createTweet()
@@ -879,7 +872,20 @@ async def get_holo_schedule():
     await new_schedule()
 
 
+@tasks.loop(minutes=45)
+async def refresh_access_token():
+    global YTClient
+    # // Call refreshToken which creates a new Access Token
+    access_token = refreshToken(YTClientID, YTClientSecret, refresh_token)
+
+    # // Pass the new Access Token to Credentials() to create new credentials
+    credentials = google.oauth2.credentials.Credentials(access_token)
+    YTClient = googleapiclient.discovery.build(
+        'youtube', 'v3', credentials=credentials)
+
+
 def collabTitleUpdater():
+
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
         for i in range(len(holo_schedule)):
@@ -951,7 +957,7 @@ async def new_schedule():
                         userDict[channel_id] = idList
                         userDict[channel_id] = list(set(userDict[channel_id]))
 
-            except:  # if arr = [], continue
+            except Exception:  # if arr = [], continue
                 continue
 
             for ch in userDict:
@@ -1006,7 +1012,7 @@ async def now_streaming():
                         userDict[channel_id] = idList
                         userDict[channel_id] = list(set(userDict[channel_id]))
 
-            except:  # if arr = [], continue
+            except Exception:  # if arr = [], continue
                 continue
 
             for ch in userDict:
