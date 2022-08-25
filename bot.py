@@ -843,29 +843,29 @@ async def get_holo_schedule():
     args = argparser.parse_args(
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
-    tomorrow_list = (main.main(args, today_list))
+    tomorrow_list = (main.main(args, holo_list=[]))
 
     scheduleWithCollabs = collabTitleUpdater()
 
     # this appends
 
-    # try:
-    #     joinedList = today_list + tomorrow_list
-    # except TypeError:  # if tmr_list is empty
-    #     joinedList = today_list
+    try:
+        joinedList = today_list + tomorrow_list
+    except TypeError:  # if tmr_list is empty
+        joinedList = today_list
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
-    for i in range(len(tomorrow_list)):
+    for i in range(len(joinedList)):
         for j in range(len(holo_schedule)):
-            tomorrow_list[i]['member'] = scheduleWithCollabs[i]['member']
+            joinedList[i]['member'] = scheduleWithCollabs[i]['member']
             # if the new list entry is the exact same as the old list
-            if tomorrow_list[i].get("url") in list_of_old_url and holo_schedule[j]["mentioned"] == True:
-                tomorrow_list[i]["mentioned"] = True
+            if joinedList[i].get("url") in list_of_old_url and holo_schedule[j]["mentioned"] == True:
+                joinedList[i]["mentioned"] = True
             # only if live-pinged is true, update the new list for live-pinged to be true
-            if holo_schedule[j].get("url") == tomorrow_list[i].get("url") and holo_schedule[j]["live_pinged"] == True:
-                tomorrow_list[i]["live_pinged"] = True
+            if holo_schedule[j].get("url") == joinedList[i].get("url") and holo_schedule[j]["live_pinged"] == True:
+                joinedList[i]["live_pinged"] = True
     with open('holo_schedule.json', 'w') as f:
-        json.dump(tomorrow_list, f, indent=4)
+        json.dump(joinedList, f, indent=4)
 
     # print('holo_schedule.json updated')
 
