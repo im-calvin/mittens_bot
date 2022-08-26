@@ -845,14 +845,17 @@ async def get_holo_schedule():
     # flattenは不正解だけどこんな感じですね
     tomorrow_list = (main.main(args, holo_list=[]))
 
-    scheduleWithCollabs = collabTitleUpdater()
-
-    # this appends
-
     try:
         joinedList = today_list + tomorrow_list
     except TypeError:  # if tmr_list is empty
         joinedList = today_list
+        
+    with open('holo_schedule.json', 'w') as f:
+        json.dump(joinedList, f, indent=4)
+
+    scheduleWithCollabs = collabTitleUpdater()
+
+    
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
     for i in range(len(joinedList)):
