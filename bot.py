@@ -82,6 +82,23 @@ def refreshToken(client_id, client_secret, refresh_token):
         return None
 
 
+def generateRefreshToken():
+    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+        client_secrets_file='yt_client_secret.json', scopes=["https://www.googleapis.com/auth/youtube.readonly"])
+    credentials = flow.run_console()
+    youtube = googleapiclient.discovery.build(
+        'youtube', 'v3', credentials=credentials)
+    request = youtube.channels().list(
+        part="snippet",
+        id="UC_x5XG1OV2P6uZZ5FSM9Ttw"
+    )
+    response = request.execute()
+    print(response)
+
+
+# generateRefreshToken()
+
+
 all_members_list = []
 with open('holo_members.txt', 'rb') as f:
     file_content = f.readlines()[1:]  # Ignore first row
@@ -818,6 +835,7 @@ async def firstScrape():
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list)
     # print('firstScrape done!')
+    # await refresh_access_token()
 
     scheduleWithCollabs = collabTitleUpdater()
 
@@ -849,13 +867,12 @@ async def get_holo_schedule():
         joinedList = today_list + tomorrow_list
     except TypeError:  # if tmr_list is empty
         joinedList = today_list
-        
+
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
 
     scheduleWithCollabs = collabTitleUpdater()
 
-    
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
     for i in range(len(joinedList)):
@@ -891,24 +908,24 @@ def collabTitleUpdater():
 
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
-        for i in range(len(holo_schedule)):
-            title_str = holo_schedule[i]['title']
-            url = holo_schedule[i]['url']
-            index = url.find('=')
-            if index != -1:  # if yt link (not a joqr)
-                id = url[index+1:]
-                request = YTClient.videos().list(
-                    part="snippet",
-                    id=id)
-                response = request.execute()
-                description = response['items'][0]['snippet']['description']
-                # print(description)
+    for i in range(len(holo_schedule)):
+        title_str = holo_schedule[i]['title']
+        url = holo_schedule[i]['url']
+        index = url.find('=')
+        if index != -1:  # if yt link (not a joqr)
+            id = url[index+1:]
+            request = YTClient.videos().list(
+                part="snippet",
+                id=id)
+            response = request.execute()
+            description = response['items'][0]['snippet']['description']
+            # print(description)
 
-                for keys, values in nickNameDict.items():
-                    for j in range(len(values)):
-                        # successfully found matching str
-                        if description.find(values[j]) != -1:
-                            holo_schedule[i]['member'].append(keys)
+            for keys, values in nickNameDict.items():
+                for j in range(len(values)):
+                    # successfully found matching str
+                    if description.find(values[j]) != -1:
+                        holo_schedule[i]['member'].append(keys)
 
     with open('holo_schedule.json', 'w') as f:
         json.dump(holo_schedule, f, indent=4)
