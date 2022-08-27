@@ -96,7 +96,7 @@ def main(args, holo_list):
                     # exports json file
                     json.dump(holo_list, f, indent=4)
 
-                    f.close()
+                    
             # Some emoji cause this error
             except UnicodeEncodeError:
                 title_list[i] = remove_emoji(title_list[i])
@@ -106,7 +106,7 @@ def main(args, holo_list):
                     # exports json file
                     json.dump(holo_list, f, indent=4)
 
-                    f.close()
+                  
 
         else:  # if args.tomorrow
 
@@ -128,7 +128,7 @@ def main(args, holo_list):
                     # exports json file
                     json.dump(holo_list, f, indent=4)
 
-                    f.close()
+                    
             # Some emoji cause this error
             except UnicodeEncodeError:
                 title_list[i] = remove_emoji(title_list[i])
@@ -138,6 +138,6 @@ def main(args, holo_list):
                     # exports json file
                     json.dump(holo_list, f, indent=4)
 
-                    f.close()
+                    
 
     return holo_list

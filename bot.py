@@ -154,7 +154,9 @@ except json.decoder.JSONDecodeError:  # if empty
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
-    refresh_access_token.start()
+    # refresh_access_token.start()
+    if not refresh_access_token.is_running():
+        refresh_access_token.start() # in case on_ready gets called a 2nd time
     await refresh_access_token()
 
     await firstScrape()
