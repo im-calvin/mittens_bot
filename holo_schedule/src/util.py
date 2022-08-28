@@ -135,7 +135,8 @@ def get_all_members_list():
         all_members_list.extend(member_block.decode("utf-8").split(','))
 
     # Delete break symbol
-    all_members_list[-1] = all_members_list[-1].replace('\n', '')
+    all_members_list[-1] = all_members_list[-1].replace('\n', '') # replace the imaginary \n for baelz
+    all_members_list[37] = all_members_list[37].replace('\n', '') # replace \n for iroha
 
     return all_members_list
 
