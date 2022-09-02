@@ -162,7 +162,7 @@ async def on_ready():
     await firstScrape()
     createTweet()
 
-    if not get_holo_schedule.start.is_running() or not now_streaming.is_running() or not tweetScrape.is_running():
+    if not get_holo_schedule.is_running() or not now_streaming.is_running() or not tweetScrape.is_running():
         get_holo_schedule.start()  # background task
         now_streaming.start()
         tweetScrape.start()
