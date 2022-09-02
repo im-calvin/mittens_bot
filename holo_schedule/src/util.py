@@ -119,6 +119,7 @@ def get_en_list():
     # Delete break symbol
     en_list[-1] = en_list[-1].replace('\n', '')
     en_list[37] = en_list[37].replace('\r\n', '')  # replace for iroha \r\n
+    en_list[37] = en_list[37].replace('\n', '')
 
     return tuple(en_list)
 
