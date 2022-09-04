@@ -93,7 +93,7 @@ def generateRefreshToken():
         id="UC_x5XG1OV2P6uZZ5FSM9Ttw"
     )
     response = request.execute()
-    print(response)
+    print(credentials.refresh_token)
 
 
 # generateRefreshToken()
