@@ -6,11 +6,12 @@ import math
 from disputils import EmbedPaginator, pagination
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
-import google_auth_oauthlib.flow
-import googleapiclient.discovery
-import googleapiclient.errors
-import requests
-import google
+from googleapiclient.discovery import build
+# import google_auth_oauthlib.flow
+# import googleapiclient.discovery
+# import googleapiclient.errors
+# import requests
+# import google
 import json
 import aiohttp
 import io
@@ -62,38 +63,39 @@ auth = tweepy.OAuth1UserHandler(
 api = tweepy.API(auth)
 dlTrans = deepl.Translator(deepl_token)
 genius = Genius(genius_client)
+YTClient = build('youtube', 'v3', developerKey=TRANSLATE)
 
 
-def refreshToken(client_id, client_secret, refresh_token):
-    params = {
-        "grant_type": "refresh_token",
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "refresh_token": refresh_token
-    }
+# def refreshToken(client_id, client_secret, refresh_token):
+#     params = {
+#         "grant_type": "refresh_token",
+#         "client_id": client_id,
+#         "client_secret": client_secret,
+#         "refresh_token": refresh_token
+#     }
 
-    authorization_url = "https://oauth2.googleapis.com/token"
+#     authorization_url = "https://oauth2.googleapis.com/token"
 
-    r = requests.post(authorization_url, data=params)
+#     r = requests.post(authorization_url, data=params)
 
-    if r.ok:
-        return r.json()['access_token']
-    else:
-        return None
+#     if r.ok:
+#         return r.json()['access_token']
+#     else:
+#         return None
 
 
-def generateRefreshToken():
-    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-        client_secrets_file='yt_client_secret.json', scopes=["https://www.googleapis.com/auth/youtube.readonly"])
-    credentials = flow.run_console()
-    youtube = googleapiclient.discovery.build(
-        'youtube', 'v3', credentials=credentials)
-    request = youtube.channels().list(
-        part="snippet",
-        id="UC_x5XG1OV2P6uZZ5FSM9Ttw"
-    )
-    response = request.execute()
-    print(credentials.refresh_token)
+# def generateRefreshToken():
+#     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+#         client_secrets_file='yt_client_secret.json', scopes=["https://www.googleapis.com/auth/youtube.readonly"])
+#     credentials = flow.run_console()
+#     youtube = googleapiclient.discovery.build(
+#         'youtube', 'v3', credentials=credentials)
+#     request = youtube.channels().list(
+#         part="snippet",
+#         id="UC_x5XG1OV2P6uZZ5FSM9Ttw"
+#     )
+#     response = request.execute()
+#     print(credentials.refresh_token)
 
 
 # generateRefreshToken()
@@ -155,9 +157,9 @@ async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
     # refresh_access_token.start()
-    if not refresh_access_token.is_running():
-        refresh_access_token.start()  # in case on_ready gets called a 2nd time
-    await refresh_access_token()
+    # if not refresh_access_token.is_running():
+    #     refresh_access_token.start()  # in case on_ready gets called a 2nd time
+    # await refresh_access_token()
 
     await firstScrape()
     createTweet()
@@ -895,16 +897,16 @@ async def get_holo_schedule():
     await new_schedule()
 
 
-@tasks.loop(minutes=45)
-async def refresh_access_token():
-    global YTClient
-    # // Call refreshToken which creates a new Access Token
-    access_token = refreshToken(YTClientID, YTClientSecret, refresh_token)
+# @tasks.loop(minutes=45)
+# async def refresh_access_token():
+#     global YTClient
+#     # // Call refreshToken which creates a new Access Token
+#     access_token = refreshToken(YTClientID, YTClientSecret, refresh_token)
 
-    # // Pass the new Access Token to Credentials() to create new credentials
-    credentials = google.oauth2.credentials.Credentials(access_token)
-    YTClient = googleapiclient.discovery.build(
-        'youtube', 'v3', credentials=credentials)
+#     # // Pass the new Access Token to Credentials() to create new credentials
+#     credentials = google.oauth2.credentials.Credentials(access_token)
+#     # YTClient = googleapiclient.discovery.build(
+#     #     'youtube', 'v3', credentials=credentials)
 
 
 def collabTitleUpdater():
