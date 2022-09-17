@@ -118,6 +118,8 @@ def get_en_list():
 
     # Delete break symbol
     en_list[-1] = en_list[-1].replace('\n', '')
+    en_list[37] = en_list[37].replace('\r\n', '')  # replace for iroha \r\n
+    en_list[37] = en_list[37].replace('\n', '')
 
     return tuple(en_list)
 
@@ -135,7 +137,10 @@ def get_all_members_list():
         all_members_list.extend(member_block.decode("utf-8").split(','))
 
     # Delete break symbol
+    # replace the imaginary \n for baelz
     all_members_list[-1] = all_members_list[-1].replace('\n', '')
+    all_members_list[37] = all_members_list[37].replace(
+        '\n', '')  # replace \n for iroha
 
     return all_members_list
 

@@ -77,67 +77,41 @@ def main(args, holo_list):
             m_space = ' ' * ((-1 * len(members_list[i])) + 18)
 
         # With titles of streams
-        if args.title and not args.tomorrow:
-            # always going to have args.title in json
-            # updating json file:
-            holo_list.append({
-                "time": time,
-                "member": member,
-                "url": url,
-                "title": title_list[i],
-                "date": "today",
-                "mentioned": False,
-                "live_pinged": False
-            }
-            )
-            try:
-                with open('holo_schedule.json', "w") as f:
-                    # replace the old json file every 15m -- write only!
-                    # exports json file
-                    json.dump(holo_list, f, indent=4)
+        try:
+            if args.title and not args.tomorrow:
+                # always going to have args.title in json
+                # updating json file:
+                holo_list.append({
+                    "time": time,
+                    "member": [member],
+                    "url": url,
+                    "title": title_list[i],
+                    "date": "today",
+                    "mentioned": False,
+                    "live_pinged": False
+                }
+                )
+                    
+            else:  # if args.tomorrow
 
-                    f.close()
-            # Some emoji cause this error
-            except UnicodeEncodeError:
-                title_list[i] = remove_emoji(title_list[i])
+                holo_list.append({
+                    "time": time,
+                    "member": [member],
+                    "url": url,
+                    "title": title_list[i],
+                    "date": "tomorrow",
+                    "mentioned": False,
+                    "live_pinged": False
+                }
+                )
+        # Some emoji cause this error
+        except UnicodeEncodeError:
+            title_list[i] = remove_emoji(title_list[i])
+            continue
 
-                with open('holo_schedule.json', "w") as f:
-                    # replace the old json file every 15m -- write only!
-                    # exports json file
-                    json.dump(holo_list, f, indent=4)
-
-                    f.close()
-
-        else:  # if args.tomorrow
-
-            holo_list.append({
-                "time": time,
-                "member": member,
-                "url": url,
-                "title": title_list[i],
-                "date": "tomorrow",
-                "mentioned": False,
-                "live_pinged": False
-            }
-            )
-
-            try:
-
-                with open('holo_schedule.json', "w") as f:
-                    # replace the old json file every 15m -- write only!
-                    # exports json file
-                    json.dump(holo_list, f, indent=4)
-
-                    f.close()
-            # Some emoji cause this error
-            except UnicodeEncodeError:
-                title_list[i] = remove_emoji(title_list[i])
-
-                with open('holo_schedule.json', "w") as f:
-                    # replace the old json file every 15m -- write only!
-                    # exports json file
-                    json.dump(holo_list, f, indent=4)
-
-                    f.close()
+    with open('holo_schedule.json', "w") as f:
+        # replace the old json file every 15m -- write only!
+        # exports json file
+        json.dump(holo_list, f, indent=4)
 
     return holo_list

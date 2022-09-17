@@ -6,6 +6,12 @@ import math
 from disputils import EmbedPaginator, pagination
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
+from googleapiclient.discovery import build
+# import google_auth_oauthlib.flow
+# import googleapiclient.discovery
+# import googleapiclient.errors
+# import requests
+# import google
 import json
 import aiohttp
 import io
@@ -41,6 +47,9 @@ bearer_token = os.getenv('BEARER_TOKEN')
 deepl_token = os.getenv('DEEPL')
 genius_client = os.getenv('LYRICS_CLIENT')
 genius_secret = os.getenv('LYRICS_SECRET')
+YTClientID = os.getenv('YT_CLIENT_ID')
+YTClientSecret = os.getenv('YT_CLIENT_SECRET')
+refresh_token = os.getenv('YT_REFRESH_TOKEN')
 
 intents = discord.Intents.default()
 intents.reactions = True
@@ -54,6 +63,42 @@ auth = tweepy.OAuth1UserHandler(
 api = tweepy.API(auth)
 dlTrans = deepl.Translator(deepl_token)
 genius = Genius(genius_client)
+YTClient = build('youtube', 'v3', developerKey=TRANSLATE)
+
+
+# def refreshToken(client_id, client_secret, refresh_token):
+#     params = {
+#         "grant_type": "refresh_token",
+#         "client_id": client_id,
+#         "client_secret": client_secret,
+#         "refresh_token": refresh_token
+#     }
+
+#     authorization_url = "https://oauth2.googleapis.com/token"
+
+#     r = requests.post(authorization_url, data=params)
+
+#     if r.ok:
+#         return r.json()['access_token']
+#     else:
+#         return None
+
+
+# def generateRefreshToken():
+#     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+#         client_secrets_file='yt_client_secret.json', scopes=["https://www.googleapis.com/auth/youtube.readonly"])
+#     credentials = flow.run_console()
+#     youtube = googleapiclient.discovery.build(
+#         'youtube', 'v3', credentials=credentials)
+#     request = youtube.channels().list(
+#         part="snippet",
+#         id="UC_x5XG1OV2P6uZZ5FSM9Ttw"
+#     )
+#     response = request.execute()
+#     print(credentials.refresh_token)
+
+
+# generateRefreshToken()
 
 
 all_members_list = []
@@ -73,7 +118,6 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 twDict = {}
-
 
 
 def createTweet():
@@ -112,13 +156,18 @@ except json.decoder.JSONDecodeError:  # if empty
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
+    # refresh_access_token.start()
+    # if not refresh_access_token.is_running():
+    #     refresh_access_token.start()  # in case on_ready gets called a 2nd time
+    # await refresh_access_token()
 
     await firstScrape()
     createTweet()
 
-    get_holo_schedule.start()  # background task
-    now_streaming.start()
-    tweetScrape.start()
+    if not get_holo_schedule.is_running() or not now_streaming.is_running() or not tweetScrape.is_running():
+        get_holo_schedule.start()  # background task
+        now_streaming.start()
+        tweetScrape.start()
 
     print("もしもし")
 
@@ -192,7 +241,7 @@ async def on_message(message):
 
         else:
             await message.channel.send('Unknown command')
-            
+
         return
 
     if translMode == 'deepl':
@@ -791,7 +840,11 @@ async def firstScrape():
         ["--tomorrow", "--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list)
     # print('firstScrape done!')
-    await asyncio.sleep(1.0)
+    # await refresh_access_token()
+
+    scheduleWithCollabs = collabTitleUpdater()
+
+    # await asyncio.sleep(1.0)
     await new_schedule()
 
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
@@ -815,29 +868,77 @@ async def get_holo_schedule():
     # flattenは不正解だけどこんな感じですね
     tomorrow_list = (main.main(args, holo_list=[]))
 
-    # this appends
-
     try:
         joinedList = today_list + tomorrow_list
     except TypeError:  # if tmr_list is empty
         joinedList = today_list
+
+    with open('holo_schedule.json', 'w') as f:
+        json.dump(joinedList, f, indent=4)
+
+    scheduleWithCollabs = collabTitleUpdater()
+
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
     for i in range(len(joinedList)):
         for j in range(len(holo_schedule)):
+            joinedList[i]['member'] = scheduleWithCollabs[i]['member']
             # if the new list entry is the exact same as the old list
             if joinedList[i].get("url") in list_of_old_url and holo_schedule[j]["mentioned"] == True:
                 joinedList[i]["mentioned"] = True
-                # only if live-pinged is true, update the new list for live-pinged to be true
+            # only if live-pinged is true, update the new list for live-pinged to be true
             if holo_schedule[j].get("url") == joinedList[i].get("url") and holo_schedule[j]["live_pinged"] == True:
                 joinedList[i]["live_pinged"] = True
-
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
 
     # print('holo_schedule.json updated')
 
     await new_schedule()
+
+
+# @tasks.loop(minutes=45)
+# async def refresh_access_token():
+#     global YTClient
+#     # // Call refreshToken which creates a new Access Token
+#     access_token = refreshToken(YTClientID, YTClientSecret, refresh_token)
+
+#     # // Pass the new Access Token to Credentials() to create new credentials
+#     credentials = google.oauth2.credentials.Credentials(access_token)
+#     # YTClient = googleapiclient.discovery.build(
+#     #     'youtube', 'v3', credentials=credentials)
+
+
+def collabTitleUpdater():
+
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    for i in range(len(holo_schedule)):
+        title_str = holo_schedule[i]['title']
+        url = holo_schedule[i]['url']
+        index = url.find('=')
+        # if yt link (not a joqr/twtv)
+        if 'youtube' in holo_schedule[i]['title']:
+            id = url[index+1:]
+            request = YTClient.videos().list(
+                part="snippet",
+                id=id)
+            response = request.execute()
+            try:
+                description = response['items'][0]['snippet']['description']
+            except IndexError:  # if unarchived stream and time has passed so there is no description
+                continue  # break current iteration and continue to next
+            # print(description)
+
+            for keys, values in nickNameDict.items():
+                for j in range(len(values)):
+                    # successfully found matching str
+                    if description.find(values[j]) != -1:
+                        holo_schedule[i]['member'].append(keys)
+
+    with open('holo_schedule.json', 'w') as f:
+        json.dump(holo_schedule, f, indent=4)
+    return holo_schedule
 
 # pinging portion
 
@@ -851,8 +952,10 @@ async def new_schedule():
 
     # list of dicts containing channel_id, user_id
     for i in range(len(holo_schedule)):  # iterate through holo_schedule
-        vtuber_channel = holo_schedule[i].get("member")
-        user_list = profiles.get(vtuber_channel)
+        vtuber_channel = holo_schedule[i].get("member")  # list of vTuber names
+        user_list = []  # list of userIDs associated with vtuberCh
+        for j in range(len(vtuber_channel)):
+            user_list.append(profiles[vtuber_channel[j]])
         userDict = {}
         mention_str = ''
 
@@ -861,7 +964,7 @@ async def new_schedule():
         unix_time = time_convert(holo_time, holo_date)
         time_str = "<t:" + str(unix_time) + ">"
         relative_time_str = "<t:" + str(unix_time) + ":R>"
-        header_str = "**" + vtuber_channel + "** scheduled a stream at "
+        header_str = "**" + vtuber_channel[0] + "** scheduled a stream at "
         title_str = holo_schedule[i].get("title")
         url = holo_schedule[i].get("url")
 
@@ -871,15 +974,19 @@ async def new_schedule():
             with open('holo_schedule.json', 'w') as h:
                 json.dump(holo_schedule, h, indent=4)
             try:
-                for j in range(len(user_list)):  # iterate through user_list
-                    user_id = (user_list[j].get("user_id"))
-                    channel_id = int(user_list[j].get("channel_id"))
+                for k in range(len(user_list)):  # users = 1st layer of 2d array
+                    idList = []
+                    # iterate through user_list
+                    for j in range(len(user_list[k])):
+                        user_id = (user_list[k][j].get("user_id"))
+                        channel_id = int(user_list[k][j].get("channel_id"))
+                        # if channel_id in userDict:
+                        #     # user_id not in userDict[channel_id]:
+                        idList.append(user_id)
+                        userDict[channel_id] = idList
+                        userDict[channel_id] = list(set(userDict[channel_id]))
 
-                    if channel_id in userDict:
-                        userDict[channel_id].append(user_id)
-                    else:
-                        userDict[channel_id] = [user_id]
-            except TypeError:  # if arr = [], continue
+            except Exception:  # if arr = [], continue
                 continue
 
             for ch in userDict:
@@ -902,11 +1009,13 @@ async def now_streaming():
     # you really only have to check the latest 5. iterating through holo_schedule
     for i in range(len(holo_schedule)):
         vtuber_channel = holo_schedule[i].get("member")
-        user_list = profiles.get(vtuber_channel)
+        user_list = []  # list of userIDs associated with vtuberCh
+        for j in range(len(vtuber_channel)):
+            user_list.append(profiles[vtuber_channel[j]])
         userDict = {}
         mention_str = ''
 
-        header_str = "**" + vtuber_channel + "** is now live! \n"
+        header_str = "**" + vtuber_channel[0] + "** is now live! \n"
         title_str = holo_schedule[i].get("title")
         url = holo_schedule[i].get("url")
 
@@ -920,16 +1029,19 @@ async def now_streaming():
                 json.dump(holo_schedule, f, indent=4)
 
             try:
-                for j in range((len(user_list))):
-                    user_id = user_list[j].get("user_id")
-                    channel_id = int(
-                        user_list[j].get("channel_id"))
+                for k in range(len(user_list)):  # users = 1st layer of 2d array
+                    idList = []
+                    # iterate through user_list
+                    for j in range(len(user_list[k])):
+                        user_id = (user_list[k][j].get("user_id"))
+                        channel_id = int(user_list[k][j].get("channel_id"))
+                        # if channel_id in userDict:
+                        #     # user_id not in userDict[channel_id]:
+                        idList.append(user_id)
+                        userDict[channel_id] = idList
+                        userDict[channel_id] = list(set(userDict[channel_id]))
 
-                    if channel_id in userDict:
-                        userDict[channel_id].append(user_id)
-                    else:
-                        userDict[channel_id] = [user_id]
-            except TypeError:  # see above
+            except Exception:  # if arr = [], continue
                 continue
 
             for ch in userDict:
@@ -1026,12 +1138,15 @@ async def specificSchedule(message, msg):
         return
 
     indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    if indexOfMember == "bruh what":
+        await message.channel.send("Couldn't find the channel you specified.")
+        return
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
         vtuber_channel = all_members_list[indexOfMember]
         # create list of holo_schedule for specific member
         scheduleList = []
         for i in range(len(holo_schedule)):
-            if holo_schedule[i]["member"] == vtuber_channel:
+            if holo_schedule[i]["member"][0] == vtuber_channel:
                 scheduleList.append(holo_schedule[i])
         if scheduleList == []:
             await message.channel.send("**" + vtuber_channel + "** does not have any scheduled streams")
@@ -1049,7 +1164,7 @@ async def regionSchedule(message, msg):
     scheduleList = []
 
     for i in range(len(holo_schedule)):
-        if holo_schedule[i]["member"] in regionList:
+        if holo_schedule[i]["member"][0] in regionList:
             scheduleList.append(holo_schedule[i])
     if scheduleList == []:
         await message.channel.send("holo{} has no scheduled streams".format(msg))
@@ -1075,7 +1190,7 @@ async def embedMsg(message, hList):
                 unix_time = time_convert(holo_time, holo_date)
                 time_str = "<t:" + str(unix_time) + ">"
                 relative_time_str = "<t:" + str(unix_time) + ":R>"
-                member_str = hList[i].get("member") + " "
+                member_str = hList[i].get("member")[0] + " "
                 title_str = hList[i].get("title")
                 url = hList[i].get("url")
 
@@ -1131,6 +1246,7 @@ MEMBER_LIST_STR = """
 **Holostars:** Hanasaki Miyabi, Kanade Izuru, Arurandeisu, Rikka, Astel Leda, Kishidou Tenma, Yukoku Roberu, Kageyama Shien, Aragami Oga, Yatogami Fuma, Utsugi Uyu, Hizaki Gamma, Minase Rio
 **HoloID:** Ayunda Risu, Moona Hoshinova, Airani Iofifteen, Kureiji Ollie, Anya Melfissa, Pavolia Reine, Vestia Zeta, Kaela Kovalskia, Kobo Kanaeru
 **HoloEN:** Mori Calliope, Takanashi Kiara, Ninomae Ina'nis, Gawr Gura, Watson Amelia, IRyS, Tsukumo Sana, Ceres Fauna, Ouro Kronii, Nanashi Mumei, Hakos Baelz
+**Holostars EN:** Syrios, Vesper, Altare, Dezmond
 """
 
 # MEMBER_LIST_STR = all_members_list
@@ -1149,6 +1265,23 @@ holo_dict = {
     'EN': holoEN,
     'ID': holoID,
     'STARS': holoSTARS
+}
+
+nickNameDict = {
+    "Gawr Gura": ["@Gawr Gura Ch. hololive-EN", "https://www.youtube.com/channel/UCoSrY_IQQVpmIRZ9Xf-y93g"],
+    "Ninomae Ina'nis": ["@Ninomae Ina'nis Ch. hololive-EN", "https://www.youtube.com/channel/UCMwGHR0BTZuLsmjY_NT5Pwg"],
+    "Mori Calliope": ["@Mori Calliope Ch. hololive-EN", "https://www.youtube.com/channel/UCL_qhgtOy0dy1Agp8vkySQg"],
+    "Watson Amelia": ["@Watson Amelia Ch. hololive-EN", "https://www.youtube.com/channel/UCyl1z3jo3XHR1riLFKG5UAg"],
+    "Takanashi Kiara": ["@Takanashi Kiara Ch. hololive-EN", "https://www.youtube.com/channel/UCHsx4Hqa-1ORjQTh9TYDhww"],
+    "Nanashi Mumei": ["@Nanashi Mumei Ch. hololive-EN", "https://www.youtube.com/channel/UC3n5uGu18FoCy23ggWWp8tA"],
+    "Ceres Fauna": ["@Ceres Fauna Ch. hololive-EN", "https://www.youtube.com/channel/UCO_aKKYxn4tvrqPjcTzZ6EQ"],
+    "Ouro Kronii": ["@Ouro Kronii Ch. hololive-EN", "https://www.youtube.com/channel/UCmbs8T6MWqUHP1tIQvSgKrg"],
+    "Hakos Baelz": ["@Hakos Baelz Ch. hololive-EN", "https://www.youtube.com/channel/UCgmPnx-EEeOrZSg5Tiw7ZRQ"],
+    "IRyS": ["@IRyS Ch. hololive-EN", "https://www.youtube.com/channel/UC8rcEBzJSleTkf_-agPM20g"],
+    "Shirakami Fubuki": ["@フブキCh。白上フブキ"],
+    "Yuzuki Choco": ["@Choco Ch. 癒月ちょこ"],
+    "La+ Darknesss": ["@Laplus ch. ラプラス・ダークネス - holoX -"],
+    "Momosuzu Nene": ["@Nene Ch.桃鈴ねね"]
 }
 
 client.run(TOKEN)

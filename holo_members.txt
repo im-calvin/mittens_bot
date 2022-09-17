@@ -3,3 +3,4 @@
 **holostars:**,Hanasaki Miyabi,Kanade Izuru,Arurandeisu,Rikka,Astel Leda,Kishidou Tenma,Yukoku Roberu,Kageyama Shien,Aragami Oga,Yatogami Fuma,Utsugi Uyu,Hizaki Gamma,Minase Rio
 **holoID:**,Ayunda Risu,Moona Hoshinova,Airani Iofifteen,Kureiji Ollie,Anya Melfissa,Pavolia Reine,Vestia Zeta,Kaela Kovalskia,Kobo Kanaeru
 **holoEN:**,Mori Calliope,Takanashi Kiara,Ninomae Ina'nis,Gawr Gura,Watson Amelia,IRyS,Tsukumo Sana,Ceres Fauna,Ouro Kronii,Nanashi Mumei,Hakos Baelz
+**holostarsEN:**, Syrios, Vesper, Altare, Dezmond
