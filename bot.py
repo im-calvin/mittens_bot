@@ -917,13 +917,17 @@ def collabTitleUpdater():
         title_str = holo_schedule[i]['title']
         url = holo_schedule[i]['url']
         index = url.find('=')
-        if index != -1:  # if yt link (not a joqr)
+        # if yt link (not a joqr/twtv)
+        if 'youtube' in holo_schedule[i]['title']:
             id = url[index+1:]
             request = YTClient.videos().list(
                 part="snippet",
                 id=id)
             response = request.execute()
-            description = response['items'][0]['snippet']['description']
+            try:
+                description = response['items'][0]['snippet']['description']
+            except IndexError:  # if unarchived stream and time has passed so there is no description
+                continue  # break current iteration and continue to next
             # print(description)
 
             for keys, values in nickNameDict.items():
