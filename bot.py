@@ -927,6 +927,8 @@ def collabTitleUpdater():
             try:
                 description = response['items'][0]['snippet']['description']
             except IndexError:  # if unarchived stream and time has passed so there is no description
+                # holo_schedule[i]['member'].append(keys)
+                
                 continue  # break current iteration and continue to next
             # print(description)
 

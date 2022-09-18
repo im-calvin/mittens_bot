@@ -66,6 +66,8 @@ def convert_into_en_list(members_list):
     for member in members_list:
         try:
             member_index = JA_LIST.index(member.replace("サブ", ""))
+            # member_index = JA_LIST.index(
+            #     member.replace('風真いろは', 'Kazama Iroha'))
             result.append(EN_LIST[member_index])
         except ValueError:
             result.append(member)
@@ -119,6 +121,7 @@ def get_en_list():
     # Delete break symbol
     en_list[-1] = en_list[-1].replace('\n', '')
     en_list[37] = en_list[37].replace('\r\n', '')  # replace for iroha \r\n
+    en_list[37] = en_list[37].replace('\r', '')
     en_list[37] = en_list[37].replace('\n', '')
 
     return tuple(en_list)
@@ -140,7 +143,8 @@ def get_all_members_list():
     # replace the imaginary \n for baelz
     all_members_list[-1] = all_members_list[-1].replace('\n', '')
     all_members_list[37] = all_members_list[37].replace(
-        '\n', '')  # replace \n for iroha
+        '\r', '')  # replace \n for iroha
+    all_members_list[37] = all_members_list[37].replace('\n', '')
 
     return all_members_list
 
