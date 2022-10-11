@@ -5,5 +5,5 @@ holo_schedule.json
 profiles.json
 twitter.json
 .venv
-yt_client_secret.json
-googleapi.json
+googleOAuth2.json
+googleServiceAcc.json
