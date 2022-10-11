@@ -146,7 +146,7 @@ def createTweet():
 try:
     with open('profiles.json', 'r') as f:
         profiles = json.load(f)
-except json.decoder.JSONDecodeError:  # if empty
+except FileNotFoundError:  # if doesn't exist
     profiles = {}
     for i in all_members_list:
         profiles[i] = []
@@ -930,7 +930,7 @@ def collabTitleUpdater():
                 description = response['items'][0]['snippet']['description']
             except IndexError:  # if unarchived stream and time has passed so there is no description
                 # holo_schedule[i]['member'].append(keys)
-                
+
                 continue  # break current iteration and continue to next
             # print(description)
 
