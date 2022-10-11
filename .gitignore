@@ -4,3 +4,6 @@ holo_schedule.json
 .env
 profiles.json
 twitter.json
+yt_client_secret.json
+.venv
+googleapi.json
