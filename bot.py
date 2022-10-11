@@ -56,8 +56,10 @@ intents.reactions = True
 client = discord.Client(intents=intents)
 intents = discord.Intents.all()
 TWClient = tweepy.Client(bearer_token)
-translate_client = translate.Client.from_service_account_json(
-    'googleapi.json')
+
+json_acct_info = json.loads(os.getenv('GOOGLEAPIJSON'))
+translate_client = translate.Client.from_service_account_info(
+    json_acct_info)
 auth = tweepy.OAuth1UserHandler(
     consumer_key, consumer_secret, access_token, access_token_secret)
 api = tweepy.API(auth)
