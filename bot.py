@@ -571,7 +571,7 @@ async def exceptions(message):
         return "bruh what"
     if 'dying' in message.content or 'ded' in message.content or 'dead' in message.content or 'accident' in message.content:
         await message.add_reaction('<:respawner:972568754049384478>')
-    if 'mittens' in message.content:
+    if 'mittens' in message.content.lower():
         await message.channel.send("meow?")
     if message.content == "":  # if msg is empty (ie: image)
         return "bruh what"
