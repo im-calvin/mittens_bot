@@ -192,7 +192,7 @@ async def on_message(message):
         msg = message.content[1:].split(' ')
         command = msg[0].strip()
         if command == "help":
-            await message.channel.send('add, remove, schedule [en, jp, id, stars, \'name\'], myschedule, members, list, twadd, twremove, twlist, transl, kana')
+            await message.channel.send('add, remove, schedule [en, jp, id, stars, \'name\'], myschedule, members, list, twadd, twremove, twlist, transl, kana, lyrics')
 
         elif command == "add":
             await addchannel(message, msg)
