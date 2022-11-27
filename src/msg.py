@@ -279,7 +279,7 @@ async def history(message, client):
     await embedMsg(message, holo_schedule, client)
 
 
-@tasks.loop
+@tasks.loop(minutes=10)
 async def botDown(botDownCounter, client):
     channel = await client.fetch_channel("739187928248483860")
     botDownCounter -= 1

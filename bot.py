@@ -116,7 +116,7 @@ async def on_ready():
             argparser, main, nickNameDict, YTClient, time_convert, client)  # background task
         now_streaming.start(time_convert, client)
         tweetScrape.start(TWClient, createTweet, twDict,
-                          api, sanitizer, tweepy)
+                            api, sanitizer, tweepy)
         botDown.start(botDownCounter=2, client=client)
 
     print("もしもし")
