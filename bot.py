@@ -85,6 +85,8 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 twDict = {}
+global botDownCounter
+botDownCounter = 2
 
 
 # createProfile()
@@ -106,7 +108,7 @@ async def on_ready():
     # refresh_access_token.start()
     # if not refresh_access_token.is_running():
     #     refresh_access_token.start()  # in case on_ready gets called a 2nd time
-    # await refresh_access_token()
+    # await refresh_access_token
 
     await firstScrape(argparser, main, nickNameDict, YTClient, time_convert, client)
     createTweet(api, twDict)
@@ -117,6 +119,7 @@ async def on_ready():
         now_streaming.start(time_convert, client)
         tweetScrape.start(TWClient, createTweet, twDict,
                           api, sanitizer, tweepy)
+        botDown.start()
 
     print("もしもし")
 
@@ -139,7 +142,7 @@ async def on_message(message):
         msg = message.content[1:].split(' ')
         command = msg[0].strip()
         if command == "help":
-            await message.channel.send('add, remove, schedule [en, jp, id, stars, \'name\'], myschedule, members, list, twadd, twremove, twlist, transl, kana')
+            await message.channel.send('add, remove, schedule [en, jp, id, stars, \'name\'], myschedule, members, list, twadd, twremove, twlist, transl, kana, lyrics')
 
         elif command == "add":
             await addchannel(message, msg, TWClient, tweepy, duplicate)
@@ -227,6 +230,7 @@ async def on_message_edit(before, after):
     # message object (from user)
     message = await channel.fetch_message(bot_msg.id)
     await message.edit(content=transl_msg)
+
 
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
