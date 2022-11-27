@@ -8,8 +8,7 @@ from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate
 from googleapiclient.discovery import build
 import json
-import aiohttp
-import io
+
 import tweepy
 import deepl
 
@@ -103,10 +102,6 @@ except Exception:  # if doesn't exist
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
-    # refresh_access_token.start()
-    # if not refresh_access_token.is_running():
-    #     refresh_access_token.start()  # in case on_ready gets called a 2nd time
-    # await refresh_access_token
 
     await firstScrape(argparser, main, nickNameDict, YTClient, time_convert, client)
     createTweet(api, twDict)
@@ -116,7 +111,7 @@ async def on_ready():
             argparser, main, nickNameDict, YTClient, time_convert, client)  # background task
         now_streaming.start(time_convert, client)
         tweetScrape.start(TWClient, createTweet, twDict,
-                          api, sanitizer, tweepy)
+                          api, sanitizer, tweepy, client)
         botDown.start(botDownCounter=2, client=client)
 
     print("もしもし")
@@ -189,7 +184,7 @@ async def on_message(message):
         elif command == "lyrics":
             await lyrics(message, msg, genius, client)
 
-        elif command == "history" or command == "s":
+        elif command == "history" or command == "h":
             try:
                 if msg[1] != "":  # if there is anything afterwards
                     await specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client, holo_dict, "history.json")

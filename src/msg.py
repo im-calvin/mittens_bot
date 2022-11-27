@@ -68,6 +68,9 @@ async def embedMsg(message, hList, client):
     # embedVar = discord.Embed(title="Schedule", color=0xfcc174)
     length = len(hList)
     embeds = []
+    if (length == 0):
+        await message.channel.send("No history cached <:SAD:950162275682107443>")
+        return
 
     for j in range(math.ceil(length/10)):
         embeds.append(discord.Embed(title="Schedule", color=0xfcc174))

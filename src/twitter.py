@@ -2,6 +2,8 @@
 import json
 import discord
 from discord.ext import tasks
+import aiohttp
+import io
 
 
 async def tweetAdd(message, msg, TWClient, tweepy, duplicate):
@@ -31,7 +33,7 @@ async def tweetRemove(message, msg, TWClient, duplicate):
 
 
 @tasks.loop(seconds=60)
-async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy):
+async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy, client):
     try:
         try:
             with open('twitter.json', 'r') as f:
@@ -51,7 +53,7 @@ async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy):
                                                         "attachments.media_keys", "referenced_tweets.id", "author_id"], since_id=twDict[keys])
             except KeyError:  # if twitter user was added while the bot was running
                 # THIS ERROR ISN'T FIXED
-                createTweet(api)
+                createTweet(api, twDict)
                 return
 
             # debugging line:
@@ -98,7 +100,7 @@ async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy):
                             header_str = f"**{username}** just replied to **{replyName}**!\n"
                             tweetTxt = sanitizer(ogAPIObj.full_text).strip()
                             isRef = True
-                            await sendTweetMsg(ogAPIObj, header_str, mention_str, noPic, isRef, keys, values, tweetTxt, name, tweetID)
+                            await sendTweetMsg(ogAPIObj, header_str, mention_str, noPic, isRef, keys, values, tweetTxt, name, tweetID, client)
                             header_str = ''
                             mention_str = ''
                             userDict = {}
@@ -110,7 +112,7 @@ async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy):
 
                     tweetTxt = sanitizer(apiObj.full_text).strip()
 
-                    await sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, values, tweetTxt, name, tweetID)
+                    await sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, values, tweetTxt, name, tweetID, client)
 
     except tweepy.errors.TweepyException:
         print('twitter is overloaded')
@@ -118,7 +120,7 @@ async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy):
         return
 
 
-async def sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, values, tweetTxt, name, tweetID, aiohttp, io, client):
+async def sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, values, tweetTxt, name, tweetID, client):
     userDict = {}
 
     try:
@@ -186,7 +188,7 @@ async def sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, valu
 
 
 def createTweet(api, twDict):
-    
+
     try:
         with open('twitter.json', 'r') as f:
             twitter = json.load(f)
