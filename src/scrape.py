@@ -64,8 +64,11 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
         json.dump(joinedList, f, indent=4)
 
     # for history
-    with open('history.json', 'r') as f:
-        history_dict = json.load(f)
+    try:
+        with open('history.json', 'r') as f:
+            history_dict = json.load(f)
+    except json.decoder.JSONDecodeError:  # if empty
+        history_dict = []
 
     for dict in history_dict:
         holo_date = dict["true_date"]

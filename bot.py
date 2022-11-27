@@ -229,12 +229,6 @@ async def on_message_edit(before, after):
     await message.edit(content=transl_msg)
 
 
-# sanitize messages
-
-
-# converts from jp to unix time
-
-
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
 
 
