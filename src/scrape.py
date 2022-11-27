@@ -63,6 +63,24 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
 
+    # for history
+    with open('history.json', 'r') as f:
+        history_dict = json.load(f)
+
+    for dict in history_dict:
+        holo_date = dict["true_date"]
+        tz = timezone("Asia/Tokyo")
+        curr_date = int(datetime.now(tz).timestamp())
+        if (curr_date - holo_date > 86400):
+            history_dict.remove(dict)
+
+    for dict in holo_schedule:
+        if (dict not in joinedList):
+            history_dict.append(dict)
+
+    with open('history.json', 'w') as f:
+        json.dump(history_dict, f, indent=4)
+
     # print('holo_schedule.json updated')
 
     await new_schedule(time_convert, client)
@@ -120,9 +138,7 @@ async def new_schedule(time_convert, client):
         userDict = {}
         mention_str = ''
 
-        holo_time = holo_schedule[i].get("time").split(':')
-        holo_date = holo_schedule[i].get("date")
-        unix_time = time_convert(holo_time, holo_date)
+        unix_time = holo_schedule[i].get("true_date")
         time_str = "<t:" + str(unix_time) + ">"
         relative_time_str = "<t:" + str(unix_time) + ":R>"
         header_str = "**" + vtuber_channel[0] + "** scheduled a stream at "

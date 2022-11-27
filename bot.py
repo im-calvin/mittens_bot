@@ -142,10 +142,10 @@ async def on_message(message):
             await message.channel.send('add, remove, schedule [en, jp, id, stars, \'name\'], myschedule, members, list, twadd, twremove, twlist, transl, kana')
 
         elif command == "add":
-            await addchannel(message, msg)
+            await addchannel(message, msg, TWClient, tweepy, duplicate)
 
         elif command == "remove":
-            await removechannel(message, msg)
+            await removechannel(message, msg, TWClient, duplicate)
 
         elif command == "removeall":
             await removeall(message, msg)
@@ -153,19 +153,19 @@ async def on_message(message):
         elif command == "schedule" or command == 's':
             try:
                 if msg[1] != "":  # if there is anything afterwards
-                    await specificSchedule(message, msg)
+                    await specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client)
 
             except IndexError:  # if there's no name
-                await schedule(message)
+                await schedule(message, client)
 
         elif command == "myschedule" or command == 'mys':
-            await myschedule(message)
+            await myschedule(message, client)
 
         elif command == "members":
             await message.channel.send(MEMBER_LIST_STR)
 
         elif command == "list":
-            await follow_list(message, 'profiles.json', 'x')
+            await follow_list(message, 'profiles.json', 'x', api)
 
         elif command == "json":
             await message.channel.send(file=discord.File(msg[1]))
@@ -174,19 +174,22 @@ async def on_message(message):
             await tweetAdd(message, msg)
 
         elif command == "twlist":
-            await follow_list(message, 'twitter.json', 'twitter')
+            await follow_list(message, 'twitter.json', 'twitter', api)
 
         elif command == "twremove":
-            await tweetRemove(message, msg)
+            await tweetRemove(message, msg, TWClient, duplicate)
 
         elif command == "transl":
             translMode = await transl(message, msg, translMode="google")
 
         elif command == "kana":
-            await kana(message)
+            await kana(message, print_plaintext)
 
         elif command == "lyrics":
-            await lyrics(message, msg)
+            await lyrics(message, msg, genius, client)
+
+        elif command == "history":
+            await history(message, client)
 
         else:
             await message.channel.send('Unknown command')
@@ -194,9 +197,9 @@ async def on_message(message):
         return
 
     if translMode == 'deepl':
-        transl_msg = deepl_translator(message)
+        transl_msg = deepl_translator(message, dlTrans, sanitizer)
     elif translMode == 'google':
-        transl_msg = translator(message)
+        transl_msg = translator(message, translate_client, sanitizer)
     if transl_msg == "bruh what":
         return
     bot_msg = await message.channel.send(transl_msg, translate_client, sanitizer)

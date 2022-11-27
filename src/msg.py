@@ -2,17 +2,22 @@ from discord.ext import tasks
 import json
 from datetime import datetime, timedelta, time
 from pytz import timezone
+import math
+import discord
+import re
+from disputils import EmbedPaginator, pagination
+import time as ttime
 
 # gets holo_schedule discord-ready
 
 
-async def schedule(message, json):
+async def schedule(message, client):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
-    await embedMsg(message, holo_schedule)
+    await embedMsg(message, holo_schedule, client)
 
 
-async def specificSchedule(message, msg, json, fuzzySearch, lower_member_list, all_members_list):
+async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client):
     user_id = message.author.id
     channel_id = message.channel.id
     with open('holo_schedule.json', 'r') as f:
@@ -37,13 +42,13 @@ async def specificSchedule(message, msg, json, fuzzySearch, lower_member_list, a
         if scheduleList == []:
             await message.channel.send("**" + vtuber_channel + "** does not have any scheduled streams")
             return
-        await embedMsg(message, scheduleList)
+        await embedMsg(message, scheduleList, client)
 
     else:
         await message.channel.send("Couldn't find the channel you specified.")
 
 
-async def regionSchedule(message, msg, json, holo_dict):
+async def regionSchedule(message, msg, json, holo_dict, client):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     regionList = holo_dict[msg.upper()]
@@ -55,11 +60,11 @@ async def regionSchedule(message, msg, json, holo_dict):
     if scheduleList == []:
         await message.channel.send("holo{} has no scheduled streams".format(msg))
         return
-    await embedMsg(message, scheduleList)
+    await embedMsg(message, scheduleList, client)
     return
 
 
-async def embedMsg(message, hList, math, discord, time_convert, re, ttime, EmbedPaginator, client, pagination):
+async def embedMsg(message, hList, client):
     # embedVar = discord.Embed(title="Schedule", color=0xfcc174)
     length = len(hList)
     embeds = []
@@ -69,9 +74,9 @@ async def embedMsg(message, hList, math, discord, time_convert, re, ttime, Embed
         for i in range(10):
             try:
                 i = j*10+i
-                holo_time = hList[i].get("time").split(':')
-                holo_date = hList[i].get("date")
-                unix_time = time_convert(holo_time, holo_date)
+                # holo_time = hList[i].get("time").split(':')
+                # holo_date = hList[i].get("date")
+                unix_time = hList[i].get("true_date")
                 time_str = "<t:" + str(unix_time) + ">"
                 relative_time_str = "<t:" + str(unix_time) + ":R>"
                 member_str = hList[i].get("member")[0] + " "
@@ -101,7 +106,7 @@ async def embedMsg(message, hList, math, discord, time_convert, re, ttime, Embed
     await paginator.run(users=[], channel=message.channel)
 
 
-async def myschedule(message, json):
+async def myschedule(message, client):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
     with open('profiles.json', 'r') as f:
@@ -125,10 +130,10 @@ async def myschedule(message, json):
         await message.channel.send('Your oshi has no scheduled streams <:kiaraangy:987566109790208030>')
         return
 
-    await embedMsg(message, personalizedFollow)
+    await embedMsg(message, personalizedFollow, client)
 
 
-async def follow_list(message, fileName, twBool, json, api):
+async def follow_list(message, fileName, twBool, api):
     with open(fileName, 'r') as f:
         profiles = json.load(f)
     if twBool == "twitter":
@@ -193,7 +198,7 @@ async def removechannel(message, msg, fuzzySearch, lower_member_list, all_member
 # runs the scraper for holo-schedule
 
 
-async def removeall(message, msg, json):
+async def removeall(message, msg):
     msg = ' '.join(msg[1:]).strip()
 
     with open('profiles.json', 'r') as f:
@@ -235,10 +240,10 @@ async def now_streaming(time_convert, client):
         title_str = holo_schedule[i].get("title")
         url = holo_schedule[i].get("url")
 
-        holo_time = holo_schedule[i].get("time").split(':')
-        holo_date = holo_schedule[i].get("date")
+        # holo_time = holo_schedule[i].get("time").split(':')
+        # holo_date = holo_schedule[i].get("date")
         # unix time for each schedule
-        unix_time = time_convert(holo_time, holo_date)
+        unix_time = holo_schedule[i].get("true_date")
         if unix_time < now_unix and holo_schedule[i].get("live_pinged") == False:
             holo_schedule[i]["live_pinged"] = True
             with open('holo_schedule.json', 'w') as f:
@@ -266,3 +271,9 @@ async def now_streaming(time_convert, client):
                     mention_str += "<@" + str(userDict[ch][i]) + "> "
 
                 await channel.send(header_str + title_str + "\n=> " + url + "\n" + mention_str)
+
+
+async def history(message, client):
+    with open("history.json") as f:
+        holo_schedule = json.load(f)
+    await embedMsg(message, holo_schedule, client)
