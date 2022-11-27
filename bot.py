@@ -85,8 +85,6 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 twDict = {}
-global botDownCounter
-botDownCounter = 2
 
 
 # createProfile()
@@ -119,7 +117,7 @@ async def on_ready():
         now_streaming.start(time_convert, client)
         tweetScrape.start(TWClient, createTweet, twDict,
                           api, sanitizer, tweepy)
-        botDown.start(botDownCounter, client)
+        botDown.start(botDownCounter=2, client=client)
 
     print("もしもし")
 
