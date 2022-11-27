@@ -1,4 +1,11 @@
+from discord.ext import tasks
+import json
+from datetime import datetime, timedelta, time
+from pytz import timezone
+
 # gets holo_schedule discord-ready
+
+
 async def schedule(message, json):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
@@ -51,6 +58,7 @@ async def regionSchedule(message, msg, json, holo_dict):
     await embedMsg(message, scheduleList)
     return
 
+
 async def embedMsg(message, hList, math, discord, time_convert, re, ttime, EmbedPaginator, client, pagination):
     # embedVar = discord.Embed(title="Schedule", color=0xfcc174)
     length = len(hList)
@@ -92,6 +100,7 @@ async def embedMsg(message, hList, math, discord, time_convert, re, ttime, Embed
         first=None, last=None, close=None))
     await paginator.run(users=[], channel=message.channel)
 
+
 async def myschedule(message, json):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
@@ -118,6 +127,7 @@ async def myschedule(message, json):
 
     await embedMsg(message, personalizedFollow)
 
+
 async def follow_list(message, fileName, twBool, json, api):
     with open(fileName, 'r') as f:
         profiles = json.load(f)
@@ -141,7 +151,7 @@ async def follow_list(message, fileName, twBool, json, api):
     header_str = "**You are currently following: \n**"
     await message.channel.send(header_str + follow_list)
 
-    
+
 async def addchannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate):
     user_id = message.author.id
     channel_id = message.channel.id
@@ -202,3 +212,57 @@ async def removeall(message, msg, json):
 
     chStr = '**, **'.join(chList)
     await message.channel.send("Removed **" + chStr + "** from your profile")
+
+
+@ tasks.loop(minutes=1)
+async def now_streaming(time_convert, client):
+    with open('holo_schedule.json', 'r') as f:
+        holo_schedule = json.load(f)
+    with open('profiles.json', 'r') as g:
+        profiles = json.load(g)
+    presentDate = datetime.now()
+    now_unix = int(datetime.timestamp(presentDate))
+    # you really only have to check the latest 5. iterating through holo_schedule
+    for i in range(len(holo_schedule)):
+        vtuber_channel = holo_schedule[i].get("member")
+        user_list = []  # list of userIDs associated with vtuberCh
+        for j in range(len(vtuber_channel)):
+            user_list.append(profiles[vtuber_channel[j]])
+        userDict = {}
+        mention_str = ''
+
+        header_str = "**" + vtuber_channel[0] + "** is now live! \n"
+        title_str = holo_schedule[i].get("title")
+        url = holo_schedule[i].get("url")
+
+        holo_time = holo_schedule[i].get("time").split(':')
+        holo_date = holo_schedule[i].get("date")
+        # unix time for each schedule
+        unix_time = time_convert(holo_time, holo_date)
+        if unix_time < now_unix and holo_schedule[i].get("live_pinged") == False:
+            holo_schedule[i]["live_pinged"] = True
+            with open('holo_schedule.json', 'w') as f:
+                json.dump(holo_schedule, f, indent=4)
+
+            try:
+                for k in range(len(user_list)):  # users = 1st layer of 2d array
+                    idList = []
+                    # iterate through user_list
+                    for j in range(len(user_list[k])):
+                        user_id = (user_list[k][j].get("user_id"))
+                        channel_id = int(user_list[k][j].get("channel_id"))
+                        # if channel_id in userDict:
+                        #     # user_id not in userDict[channel_id]:
+                        idList.append(user_id)
+                        userDict[channel_id] = idList
+                        userDict[channel_id] = list(set(userDict[channel_id]))
+
+            except Exception:  # if arr = [], continue
+                continue
+
+            for ch in userDict:
+                channel = client.get_channel(id=ch)  # channel obj
+                for i in range(len(userDict[ch])):
+                    mention_str += "<@" + str(userDict[ch][i]) + "> "
+
+                await channel.send(header_str + title_str + "\n=> " + url + "\n" + mention_str)

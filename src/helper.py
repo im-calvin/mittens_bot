@@ -4,6 +4,9 @@ import discord
 import asyncio
 import re
 from disputils import EmbedPaginator, pagination
+from datetime import datetime, timedelta, time
+from pytz import timezone
+
 
 async def fuzzySearch(message, msg, lower_member_list):
     try:
@@ -89,6 +92,7 @@ async def duplicate(message, fileName, key, purpose, api):
             if fileName == 'twitter.json':
                 key = api.get_user(user_id=key).name
             await message.channel.send("Added **" + key + "** to your profile")
+
 
 async def lyrics(message, msg, genius, client):
     msg = ' '.join(msg[1:]).strip()
@@ -177,10 +181,12 @@ async def lyrics(message, msg, genius, client):
         client=client, pages=embeds, control_emojis=pagination.ControlEmojis(close=None))
     await paginator.run(users=[], channel=message.channel)
 
+
 def sanitizer(msg):
     msg = re.sub(r'http\S+', '', msg)  # links
     msg = re.sub(r'<.+>', '', msg)
     return msg.strip()  # emotes
+
 
 async def exceptions(message, client):
     if message.author == client.user:  # base case
@@ -204,7 +210,8 @@ async def exceptions(message, client):
         return "bruh what"
     return
 
-def time_convert(holo_time, holo_date, timezone, datetime, time, timedelta):  # takes an array in 'xx:xx' format
+
+def time_convert(holo_time, holo_date):  # takes an array in 'xx:xx' format
     tz = timezone("Asia/Tokyo")
     now = datetime.now(tz)
     if holo_date == "tomorrow":

@@ -4,61 +4,6 @@ from datetime import datetime, timedelta, time
 from pytz import timezone
 
 
-@ tasks.loop(minutes=1)
-async def now_streaming(time_convert, client):
-    with open('holo_schedule.json', 'r') as f:
-        holo_schedule = json.load(f)
-    with open('profiles.json', 'r') as g:
-        profiles = json.load(g)
-    presentDate = datetime.now()
-    now_unix = int(datetime.timestamp(presentDate))
-    # you really only have to check the latest 5. iterating through holo_schedule
-    for i in range(len(holo_schedule)):
-        vtuber_channel = holo_schedule[i].get("member")
-        user_list = []  # list of userIDs associated with vtuberCh
-        for j in range(len(vtuber_channel)):
-            user_list.append(profiles[vtuber_channel[j]])
-        userDict = {}
-        mention_str = ''
-
-        header_str = "**" + vtuber_channel[0] + "** is now live! \n"
-        title_str = holo_schedule[i].get("title")
-        url = holo_schedule[i].get("url")
-
-        holo_time = holo_schedule[i].get("time").split(':')
-        holo_date = holo_schedule[i].get("date")
-        # unix time for each schedule
-        unix_time = time_convert(holo_time, holo_date,
-                                 timezone, datetime, time, timedelta)
-        if unix_time < now_unix and holo_schedule[i].get("live_pinged") == False:
-            holo_schedule[i]["live_pinged"] = True
-            with open('holo_schedule.json', 'w') as f:
-                json.dump(holo_schedule, f, indent=4)
-
-            try:
-                for k in range(len(user_list)):  # users = 1st layer of 2d array
-                    idList = []
-                    # iterate through user_list
-                    for j in range(len(user_list[k])):
-                        user_id = (user_list[k][j].get("user_id"))
-                        channel_id = int(user_list[k][j].get("channel_id"))
-                        # if channel_id in userDict:
-                        #     # user_id not in userDict[channel_id]:
-                        idList.append(user_id)
-                        userDict[channel_id] = idList
-                        userDict[channel_id] = list(set(userDict[channel_id]))
-
-            except Exception:  # if arr = [], continue
-                continue
-
-            for ch in userDict:
-                channel = client.get_channel(id=ch)  # channel obj
-                for i in range(len(userDict[ch])):
-                    mention_str += "<@" + str(userDict[ch][i]) + "> "
-
-                await channel.send(header_str + title_str + "\n=> " + url + "\n" + mention_str)
-
-
 async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, client):
     args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
     holo_list = main.main(args, holo_list=[])
@@ -177,8 +122,7 @@ async def new_schedule(time_convert, client):
 
         holo_time = holo_schedule[i].get("time").split(':')
         holo_date = holo_schedule[i].get("date")
-        unix_time = time_convert(holo_time, holo_date,
-                                 timezone, datetime, time, timedelta)
+        unix_time = time_convert(holo_time, holo_date)
         time_str = "<t:" + str(unix_time) + ">"
         relative_time_str = "<t:" + str(unix_time) + ":R>"
         header_str = "**" + vtuber_channel[0] + "** scheduled a stream at "

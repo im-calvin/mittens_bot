@@ -199,7 +199,7 @@ async def on_message(message):
         transl_msg = translator(message)
     if transl_msg == "bruh what":
         return
-    bot_msg = await message.channel.send(transl_msg)
+    bot_msg = await message.channel.send(transl_msg, translate_client, sanitizer)
     message_dict[message.id] = bot_msg
 
 
