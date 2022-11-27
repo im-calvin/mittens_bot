@@ -531,6 +531,8 @@ async def sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, valu
 async def exceptions(message):
     if message.author == client.user:  # base case
         return "bruh what"
+    if message.channel.id == "739187928248483860" and message.author.id == "631599913490186282":
+        botDownCounter = 2
     if message.author.bot and message.channel.id != "739187928248483860":  # bot doesn't respond to other bots
         return "bruh what"
     # for gura-chan
@@ -550,8 +552,7 @@ async def exceptions(message):
     if message.content == "助けて":
         await message.channel.send("Gasket A")
         return "bruh what"
-    if message.channel.id == "739187928248483860" and message.author.id == "631599913490186282":
-        botDownCounter = 2
+
     return
 
 # sanitize messages
