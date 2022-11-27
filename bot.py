@@ -68,41 +68,6 @@ genius = Genius(genius_client)
 YTClient = build('youtube', 'v3', developerKey=TRANSLATE)
 
 
-# def refreshToken(client_id, client_secret, refresh_token):
-#     params = {
-#         "grant_type": "refresh_token",
-#         "client_id": client_id,
-#         "client_secret": client_secret,
-#         "refresh_token": refresh_token
-#     }
-
-#     authorization_url = "https://oauth2.googleapis.com/token"
-
-#     r = requests.post(authorization_url, data=params)
-
-#     if r.ok:
-#         return r.json()['access_token']
-#     else:
-#         return None
-
-
-# def generateRefreshToken():
-#     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-#         client_secrets_file='yt_client_secret.json', scopes=["https://www.googleapis.com/auth/youtube.readonly"])
-#     credentials = flow.run_console()
-#     youtube = googleapiclient.discovery.build(
-#         'youtube', 'v3', credentials=credentials)
-#     request = youtube.channels().list(
-#         part="snippet",
-#         id="UC_x5XG1OV2P6uZZ5FSM9Ttw"
-#     )
-#     response = request.execute()
-#     print(credentials.refresh_token)
-
-
-# generateRefreshToken()
-
-
 all_members_list = []
 with open('holo_members.txt', 'rb') as f:
     file_content = f.readlines()[1:]  # Ignore first row
@@ -120,6 +85,8 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 twDict = {}
+global botDownCounter
+botDownCounter = 2
 
 
 def createTweet():
@@ -161,7 +128,7 @@ async def on_ready():
     # refresh_access_token.start()
     # if not refresh_access_token.is_running():
     #     refresh_access_token.start()  # in case on_ready gets called a 2nd time
-    # await refresh_access_token()
+    # await refresh_access_token
 
     await firstScrape()
     createTweet()
@@ -170,6 +137,7 @@ async def on_ready():
         get_holo_schedule.start()  # background task
         now_streaming.start()
         tweetScrape.start()
+        botDown.start()
 
     print("もしもし")
 
@@ -563,7 +531,7 @@ async def sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, valu
 async def exceptions(message):
     if message.author == client.user:  # base case
         return "bruh what"
-    if message.author.bot:  # bot doesn't respond to other bots
+    if message.author.bot and message.channel.id != "739187928248483860":  # bot doesn't respond to other bots
         return "bruh what"
     # for gura-chan
     if message.content == "a":
@@ -582,6 +550,8 @@ async def exceptions(message):
     if message.content == "助けて":
         await message.channel.send("Gasket A")
         return "bruh what"
+    if message.channel.id == "739187928248483860" and message.author.id == "631599913490186282":
+        botDownCounter = 2
     return
 
 # sanitize messages
@@ -1125,7 +1095,18 @@ async def myschedule(message):
     await embedMsg(message, personalizedFollow)
 
 
+@tasks.loop(minutes=10)
+async def botDown():
+    global botDownCounter
+    channel = await client.fetch_channel("739187928248483860")
+    botDownCounter -= 1
+    if (botDownCounter == 0):
+        await channel.send("<@277908415857295361> UR BOT IS DED")
+    await channel.send("meow")
+
 # gets holo_schedule discord-ready
+
+
 async def schedule(message):
     with open('holo_schedule.json', 'r') as f:
         holo_schedule = json.load(f)
