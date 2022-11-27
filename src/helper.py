@@ -191,7 +191,11 @@ def sanitizer(msg):
 async def exceptions(message, client):
     if message.author == client.user:  # base case
         return "bruh what"
-    if message.author.bot:  # bot doesn't respond to other bots
+    if message.channel.id == "739187928248483860" and message.author.id == "631599913490186282":
+        botDownCounter = 2
+    if message.author.bot and message.channel.id != "739187928248483860":  # bot doesn't respond to other bots
+        return "bruh what"
+    if message.author.bot:
         return "bruh what"
     # for gura-chan
     if message.content == "a":

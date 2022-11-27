@@ -277,3 +277,12 @@ async def history(message, client):
     with open("history.json") as f:
         holo_schedule = json.load(f)
     await embedMsg(message, holo_schedule, client)
+
+
+@tasks.loop
+async def botDown(botDownCounter, client):
+    channel = await client.fetch_channel("739187928248483860")
+    botDownCounter -= 1
+    if (botDownCounter == 0):
+        await channel.send("<@277908415857295361> UR BOT IS DED")
+    await channel.send("meow")

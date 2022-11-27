@@ -119,7 +119,7 @@ async def on_ready():
         now_streaming.start(time_convert, client)
         tweetScrape.start(TWClient, createTweet, twDict,
                           api, sanitizer, tweepy)
-        botDown.start()
+        botDown.start(botDownCounter, client)
 
     print("もしもし")
 
@@ -230,7 +230,6 @@ async def on_message_edit(before, after):
     # message object (from user)
     message = await channel.fetch_message(bot_msg.id)
     await message.edit(content=transl_msg)
-
 
 
 # code borrowed from https://github.com/TBNV999/holo-schedule-CLI
