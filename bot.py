@@ -91,7 +91,7 @@ twDict = {}
 try:
     with open('profiles.json', 'r') as f:
         profiles = json.load(f)
-except FileNotFoundError:  # if doesn't exist
+except Exception:  # if doesn't exist
     profiles = {}
     for i in all_members_list:
         profiles[i] = []
@@ -154,7 +154,7 @@ async def on_message(message):
         elif command == "schedule" or command == 's':
             try:
                 if msg[1] != "":  # if there is anything afterwards
-                    await specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client)
+                    await specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client, holo_dict, "holo_schedule.json")
 
             except IndexError:  # if there's no name
                 await schedule(message, client)
@@ -189,8 +189,13 @@ async def on_message(message):
         elif command == "lyrics":
             await lyrics(message, msg, genius, client)
 
-        elif command == "history":
-            await history(message, client)
+        elif command == "history" or command == "s":
+            try:
+                if msg[1] != "":  # if there is anything afterwards
+                    await specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client, holo_dict, "history.json")
+
+            except IndexError:  # if there's no name
+                await schedule(message, client, "history.json")
 
         else:
             await message.channel.send('Unknown command')
@@ -210,11 +215,11 @@ async def on_message(message):
 @client.event
 async def on_message_edit(before, after):
 
-    flag = await exceptions(after)
+    flag = await exceptions(after, client)
     if flag == "bruh what":
         return
 
-    transl_msg = deepl_translator(after)
+    transl_msg = deepl_translator(after, dlTrans, sanitizer)
     if transl_msg == "bruh what":  # msg is empty
         return
     channel = after.channel  # channel object

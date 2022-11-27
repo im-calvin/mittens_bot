@@ -11,24 +11,24 @@ import time as ttime
 # gets holo_schedule discord-ready
 
 
-async def schedule(message, client):
-    with open('holo_schedule.json', 'r') as f:
+async def schedule(message, client, fileName):
+    with open(fileName, 'r') as f:
         holo_schedule = json.load(f)
     await embedMsg(message, holo_schedule, client)
 
 
-async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client):
+async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client, holo_dict, fileName):
     user_id = message.author.id
     channel_id = message.channel.id
-    with open('holo_schedule.json', 'r') as f:
+    with open(fileName, 'r') as f:
         holo_schedule = json.load(f)
     msg = ' '.join(msg[1:]).strip()
 
     if msg == 'en' or msg == 'id' or msg == 'jp' or msg == 'stars':
-        await regionSchedule(message, msg)
+        await regionSchedule(message, msg, holo_dict, client, fileName)
         return
 
-    indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    indexOfMember, possibleMatch = await fuzzySearch(message, msg, lower_member_list)
     if indexOfMember == "bruh what":
         await message.channel.send("Couldn't find the channel you specified.")
         return
@@ -48,8 +48,8 @@ async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_mem
         await message.channel.send("Couldn't find the channel you specified.")
 
 
-async def regionSchedule(message, msg, json, holo_dict, client):
-    with open('holo_schedule.json', 'r') as f:
+async def regionSchedule(message, msg, holo_dict, client, fileName):
+    with open(fileName, 'r') as f:
         holo_schedule = json.load(f)
     regionList = holo_dict[msg.upper()]
     scheduleList = []
@@ -164,7 +164,7 @@ async def addchannel(message, msg, fuzzySearch, lower_member_list, all_members_l
     if msg == '':
         return
 
-    indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    indexOfMember, possibleMatch = await fuzzySearch(message, msg, lower_member_list)
     if indexOfMember == "bruh what":
         await message.channel.send("Couldn't find the channel you specified.")
         return
@@ -184,7 +184,7 @@ async def removechannel(message, msg, fuzzySearch, lower_member_list, all_member
     if msg == '':
         return
 
-    indexOfMember, possibleMatch = await fuzzySearch(message, msg)
+    indexOfMember, possibleMatch = await fuzzySearch(message, msg, lower_member_list)
     if indexOfMember == "bruh what":
         await message.channel.send("Couldn't find the channel you specified.")
         return
@@ -271,12 +271,6 @@ async def now_streaming(time_convert, client):
                     mention_str += "<@" + str(userDict[ch][i]) + "> "
 
                 await channel.send(header_str + title_str + "\n=> " + url + "\n" + mention_str)
-
-
-async def history(message, client):
-    with open("history.json") as f:
-        holo_schedule = json.load(f)
-    await embedMsg(message, holo_schedule, client)
 
 
 @tasks.loop(minutes=10)

@@ -63,28 +63,28 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
     with open('holo_schedule.json', 'w') as f:
         json.dump(joinedList, f, indent=4)
 
+    # print('holo_schedule.json updated')
+
     # for history
     try:
         with open('history.json', 'r') as f:
             history_dict = json.load(f)
-    except json.decoder.JSONDecodeError:  # if empty
+    except Exception:  # if empty
         history_dict = []
 
-    for dict in history_dict:
-        holo_date = dict["true_date"]
+    for dictEntry in history_dict:
+        holo_date = dictEntry["true_date"]
         tz = timezone("Asia/Tokyo")
         curr_date = int(datetime.now(tz).timestamp())
         if (curr_date - holo_date > 86400):
-            history_dict.remove(dict)
+            history_dict.remove(dictEntry)
 
-    for dict in holo_schedule:
-        if (dict not in joinedList):
-            history_dict.append(dict)
+    for i in range(len(holo_schedule)):
+        if not any(holo_schedule[i]['url'] == dict['url'] for dict in joinedList):
+            history_dict.append(holo_schedule[i])
 
     with open('history.json', 'w') as f:
         json.dump(history_dict, f, indent=4)
-
-    # print('holo_schedule.json updated')
 
     await new_schedule(time_convert, client)
 
