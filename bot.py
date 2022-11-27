@@ -116,7 +116,7 @@ async def on_ready():
             argparser, main, nickNameDict, YTClient, time_convert, client)  # background task
         now_streaming.start(time_convert, client)
         tweetScrape.start(TWClient, createTweet, twDict,
-                            api, sanitizer, tweepy)
+                          api, sanitizer, tweepy)
         botDown.start(botDownCounter=2, client=client)
 
     print("もしもし")
@@ -203,7 +203,7 @@ async def on_message(message):
         transl_msg = translator(message, translate_client, sanitizer)
     if transl_msg == "bruh what":
         return
-    bot_msg = await message.channel.send(transl_msg, translate_client, sanitizer)
+    bot_msg = await message.channel.send(transl_msg)
     message_dict[message.id] = bot_msg
 
 
