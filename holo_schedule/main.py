@@ -9,6 +9,7 @@ import json
 from holo_schedule.src.fetch_html import *
 from holo_schedule.src.scraping import *
 from holo_schedule.src.util import *
+from src.helper import time_convert
 
 LABELS = ("Yesterday", "Today", "Tomorrow", "The day after tomorrow")
 
@@ -76,6 +77,7 @@ def main(args, holo_list):
         else:
             m_space = ' ' * ((-1 * len(members_list[i])) + 18)
 
+        holo_time = time.split(':')
         # With titles of streams
         try:
             if args.title and not args.tomorrow:
@@ -88,10 +90,11 @@ def main(args, holo_list):
                     "title": title_list[i],
                     "date": "today",
                     "mentioned": False,
-                    "live_pinged": False
+                    "live_pinged": False,
+                    "true_date": time_convert(holo_time, "today")
                 }
                 )
-                    
+
             else:  # if args.tomorrow
 
                 holo_list.append({
@@ -101,7 +104,8 @@ def main(args, holo_list):
                     "title": title_list[i],
                     "date": "tomorrow",
                     "mentioned": False,
-                    "live_pinged": False
+                    "live_pinged": False,
+                    "true_date": time_convert(holo_time, "tomorrow")
                 }
                 )
         # Some emoji cause this error
