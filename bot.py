@@ -152,7 +152,7 @@ async def on_message(message):
                     await specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client, holo_dict, "holo_schedule.json")
 
             except IndexError:  # if there's no name
-                await schedule(message, client)
+                await schedule(message, client, "holo_schedule.json")
 
         elif command == "myschedule" or command == 'mys':
             await myschedule(message, client)
