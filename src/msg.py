@@ -7,21 +7,36 @@ import discord
 import re
 from disputils import EmbedPaginator, pagination
 import time as ttime
+import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+server = os.getenv('server')
+token = os.getenv('token')
 
 # gets holo_schedule discord-ready
 
 
 async def schedule(message, client, fileName):
-    with open(fileName, 'r') as f:
-        holo_schedule = json.load(f)
+
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": fileName
+    })
+    holo_schedule = json.loads(r.json()['value'])
     await embedMsg(message, holo_schedule, client)
 
 
 async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_members_list, client, holo_dict, fileName):
     user_id = message.author.id
     channel_id = message.channel.id
-    with open(fileName, 'r') as f:
-        holo_schedule = json.load(f)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": fileName
+    })
+    holo_schedule = json.loads(r.json()['value'])
     msg = ' '.join(msg[1:]).strip()
 
     if msg == 'en' or msg == 'id' or msg == 'jp' or msg == 'stars':
@@ -49,8 +64,11 @@ async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_mem
 
 
 async def regionSchedule(message, msg, holo_dict, client, fileName):
-    with open(fileName, 'r') as f:
-        holo_schedule = json.load(f)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": fileName
+    })
+    holo_schedule = json.loads(r.json()['value'])
     regionList = holo_dict[msg.upper()]
     scheduleList = []
 
@@ -110,10 +128,18 @@ async def embedMsg(message, hList, client):
 
 
 async def myschedule(message, client):
-    with open('holo_schedule.json', 'r') as f:
-        holo_schedule = json.load(f)
-    with open('profiles.json', 'r') as f:
-        profiles = json.load(f)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "profiles.json"
+    })
+    profiles = json.loads(r.json()['value'])
+
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "holo_schedule.json"
+    })
+    holo_schedule = json.loads(r.json()['value'])
+
     user_id = message.author.id
     channel_id = message.channel.id
     follow_list = []
@@ -137,8 +163,11 @@ async def myschedule(message, client):
 
 
 async def follow_list(message, fileName, twBool, api):
-    with open(fileName, 'r') as f:
-        profiles = json.load(f)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": fileName
+    })
+    profiles = json.loads(r.json()['value'])
     if twBool == "twitter":
         for keys in list(profiles):
             name = api.get_user(user_id=keys).name
@@ -160,7 +189,7 @@ async def follow_list(message, fileName, twBool, api):
     await message.channel.send(header_str + follow_list)
 
 
-async def addchannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate):
+async def addchannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate, api):
     user_id = message.author.id
     channel_id = message.channel.id
     msg = ' '.join(msg[1:]).strip()
@@ -176,7 +205,7 @@ async def addchannel(message, msg, fuzzySearch, lower_member_list, all_members_l
 
         vtuber_channel = all_members_list[indexOfMember]
 
-        await duplicate(message, 'profiles.json', vtuber_channel, 'add')
+        await duplicate(message, 'profiles.json', vtuber_channel, 'add', api)
 
     else:
         await message.channel.send("Couldn't find the channel you specified.")
@@ -204,8 +233,11 @@ async def removechannel(message, msg, fuzzySearch, lower_member_list, all_member
 async def removeall(message, msg):
     msg = ' '.join(msg[1:]).strip()
 
-    with open('profiles.json', 'r') as f:
-        profiles = json.load(f)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "profiles.json"
+    })
+    profiles = json.loads(r.json()['value'])
 
     chList = []
     for keys, values in profiles.items():
@@ -215,8 +247,11 @@ async def removeall(message, msg):
                 profiles[keys].pop(i)
                 chList.append(str(keys))
 
-    with open('profiles.json', 'w') as f:
-        json.dump(profiles, f, indent=4)
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "profiles.json",
+        "value": json.dumps(profiles)
+    })
 
     chStr = '**, **'.join(chList)
     await message.channel.send("Removed **" + chStr + "** from your profile")
@@ -224,10 +259,18 @@ async def removeall(message, msg):
 
 @ tasks.loop(minutes=1)
 async def now_streaming(time_convert, client):
-    with open('holo_schedule.json', 'r') as f:
-        holo_schedule = json.load(f)
-    with open('profiles.json', 'r') as g:
-        profiles = json.load(g)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "profiles.json"
+    })
+    profiles = json.loads(r.json()['value'])
+
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "holo_schedule.json"
+    })
+    holo_schedule = json.loads(r.json()['value'])
+
     presentDate = datetime.now()
     now_unix = int(datetime.timestamp(presentDate))
     # you really only have to check the latest 5. iterating through holo_schedule
@@ -249,9 +292,12 @@ async def now_streaming(time_convert, client):
         unix_time = holo_schedule[i].get("true_date")
         if unix_time < now_unix and holo_schedule[i].get("live_pinged") == False:
             holo_schedule[i]["live_pinged"] = True
-            with open('holo_schedule.json', 'w') as f:
-                json.dump(holo_schedule, f, indent=4)
 
+            r = requests.post(url=server, data={
+                "token": token,
+                "key": "holo_schedule.json",
+                "value": json.dumps(holo_schedule)
+            })
             try:
                 for k in range(len(user_list)):  # users = 1st layer of 2d array
                     idList = []

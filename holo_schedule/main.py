@@ -1,6 +1,8 @@
 # Fetch the schedule of hololive live stream
 # creds: https://github.com/TBNV999/holo-schedule-CLI
 
+from dotenv import load_dotenv
+import os
 import sys
 import unicodedata
 import argparse
@@ -12,6 +14,12 @@ from holo_schedule.src.util import *
 from src.helper import time_convert
 
 LABELS = ("Yesterday", "Today", "Tomorrow", "The day after tomorrow")
+
+
+load_dotenv()
+
+server = os.getenv('server')
+token = os.getenv('token')
 
 
 def main(args, holo_list):
@@ -113,9 +121,10 @@ def main(args, holo_list):
             title_list[i] = remove_emoji(title_list[i])
             continue
 
-    with open('holo_schedule.json', "w") as f:
-        # replace the old json file every 15m -- write only!
-        # exports json file
-        json.dump(holo_list, f, indent=4)
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "holo_schedule.json",
+        "value": json.dumps(holo_list)
+    })
 
     return holo_list

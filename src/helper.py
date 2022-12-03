@@ -3,9 +3,17 @@ import tweepy
 import discord
 import asyncio
 import re
+import requests
 from disputils import EmbedPaginator, pagination
 from datetime import datetime, timedelta, time
 from pytz import timezone
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+server = os.getenv('server')
+token = os.getenv('token')
 
 
 async def fuzzySearch(message, msg, lower_member_list):
@@ -23,11 +31,11 @@ async def fuzzySearch(message, msg, lower_member_list):
 async def duplicate(message, fileName, key, purpose, api):
     user_id = message.author.id
     channel_id = message.channel.id
-    try:
-        with open(fileName, 'r') as f:
-            profiles = json.load(f)
-    except json.decoder.JSONDecodeError:  # if empty
-        profiles = {}
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "profiles.json"
+    })
+    profiles = json.loads(r.json()['value'])
 
     key = str(key)
 
@@ -44,54 +52,68 @@ async def duplicate(message, fileName, key, purpose, api):
     for elem in user_list:
         list_of_all_values.append(list(elem.values()))
 
-    with open(fileName, 'w') as g:
+    if [channel_id, user_id] in list_of_all_values:  # already exists in file
 
-        if [channel_id, user_id] in list_of_all_values:  # already exists in file
+        if purpose == 'remove':
+            del user_list[user_index]
+            profiles[key] = user_list
 
-            if purpose == 'remove':
-                del user_list[user_index]
-                profiles[key] = user_list
-
-                json.dump(profiles, g, indent=4)
-                if fileName == 'twitter.json':
-                    # if profiles[key] == []:
-
-                    try:
-                        key = api.get_user(user_id=key).name
-                    except tweepy.errors.NotFound:
-                        pass
-                await message.channel.send("Removed **" + key + "** from your profile")
-
+            r = requests.post(url=server, data={
+                "token": token,
+                "key": "profiles.json",
+                "value": json.dumps(profiles)
+            })
             if fileName == 'twitter.json':
+                # if profiles[key] == []:
+
                 try:
                     key = api.get_user(user_id=key).name
                 except tweepy.errors.NotFound:
                     pass
-            if purpose == 'add':
-                json.dump(profiles, g, indent=4)
-                await message.channel.send("I appreciate your enthusiasm but you can't follow **" + key + "** twice. \nTry making another account?")
-        else:
-            if purpose == 'remove':
-                json.dump(profiles, g, indent=4)
-                if fileName == 'twitter.json':
-                    key = api.get_user(user_id=key).name
-                await message.channel.send("Unable to remove **" + key + "** from your profile")
-                return
+            await message.channel.send("Removed **" + key + "** from your profile")
 
-            if key in profiles:
-                profiles[key].append({
-                    "channel_id": channel_id,
-                    "user_id": user_id
-                })
-            else:
-                profiles[key] = [{
-                    "channel_id": channel_id,
-                    "user_id": user_id
-                }]
-            json.dump(profiles, g, indent=4)
+        if fileName == 'twitter.json':
+            try:
+                key = api.get_user(user_id=key).name
+            except tweepy.errors.NotFound:
+                pass
+        if purpose == 'add':
+            r = requests.post(url=server, data={
+                "token": token,
+                'key': "profiles.json",
+                'value': json.dumps(profiles)
+            })
+            await message.channel.send("I appreciate your enthusiasm but you can't follow **" + key + "** twice. \nTry making another account?")
+    else:
+        if purpose == 'remove':
+            r = requests.post(url=server, data={
+                'token': token,
+                'key': "profiles.json",
+                'value': json.dumps(profiles)
+            })
             if fileName == 'twitter.json':
                 key = api.get_user(user_id=key).name
-            await message.channel.send("Added **" + key + "** to your profile")
+            await message.channel.send("Unable to remove **" + key + "** from your profile")
+            return
+
+        if key in profiles:
+            profiles[key].append({
+                "channel_id": channel_id,
+                "user_id": user_id
+            })
+        else:
+            profiles[key] = [{
+                "channel_id": channel_id,
+                "user_id": user_id
+            }]
+        r = requests.post(url=server, data={
+            "token": token,
+            "key": "profiles.json",
+            "value": json.dumps(profiles)
+        })
+        if fileName == 'twitter.json':
+            key = api.get_user(user_id=key).name
+        await message.channel.send("Added **" + key + "** to your profile")
 
 
 async def lyrics(message, msg, genius, client):

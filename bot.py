@@ -87,15 +87,21 @@ twDict = {}
 
 
 # createProfile()
-try:
-    with open('profiles.json', 'r') as f:
-        profiles = json.load(f)
-except Exception:  # if doesn't exist
-    profiles = {}
-    for i in all_members_list:
-        profiles[i] = []
-    with open('profiles.json', 'w') as f:
-        json.dump(profiles, f, indent=4)
+# r = requests.get(url=server, params={
+#     "token": token,
+#     "key": "profiles.json"
+# })
+# if (r.json()['value'] == None):
+#     profiles = {}
+#     for i in all_members_list:
+#         profiles[i] = []
+#     r = requests.post(url=server, data={
+#         "token": token,
+#         "key": "profiles.json",
+#         "value": profiles
+#     })
+# else:
+#     profiles = json.loads(r.json()['value'])
 
 
 @client.event
@@ -138,7 +144,7 @@ async def on_message(message):
             await message.channel.send('add, remove, schedule [en, jp, id, stars, \'name\'], myschedule, members, list, twadd, twremove, twlist, transl, kana, lyrics')
 
         elif command == "add":
-            await addchannel(message, msg, TWClient, tweepy, duplicate)
+            await addchannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate, api)
 
         elif command == "remove":
             await removechannel(message, msg, TWClient, duplicate)

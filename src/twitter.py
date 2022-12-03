@@ -4,6 +4,15 @@ import discord
 from discord.ext import tasks
 import aiohttp
 import io
+import requests
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+server = os.getenv('server')
+token = os.getenv('token')
 
 
 async def tweetAdd(message, msg, TWClient, tweepy, duplicate):
@@ -35,11 +44,13 @@ async def tweetRemove(message, msg, TWClient, duplicate):
 @tasks.loop(seconds=60)
 async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy, client):
     try:
-        try:
-            with open('twitter.json', 'r') as f:
-                twitter = json.load(f)
-        except json.decoder.JSONDecodeError:  # if twitter.json is empty
+        r = requests.get(url=server, data={
+            "token": token,
+            "key": "twitter.json"
+        })
+        if (r.json()['value'] == None):
             return
+        twitter = json.loads(r.json()['value'])
 
         for keys, values in twitter.items():  # iterating over the json file
             # test = False
@@ -189,19 +200,20 @@ async def sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, valu
 
 def createTweet(api, twDict):
 
-    try:
-        with open('twitter.json', 'r') as f:
-            twitter = json.load(f)
-        for keys in twitter:
-            # twDict dict with keys as twitter IDs and empty value
-            # twDict value should be most recent id from x user
-            tweets_list = api.user_timeline(
-                user_id=keys, count=1, tweet_mode='extended')
-            try:
-                twDict[keys] = tweets_list[0].id_str
-            except IndexError:  # if being run from tweetScrape error and user has no tweets
-                twDict[keys] = {}
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "twitter.json"
+    })
+    if (r.json()['value']):
+        return
+    twitter = json.loads(r.json()['value'])
 
-    except json.decoder.JSONDecodeError:  # if twitter.json empty
-        print('twitter.json is empty')
-        pass
+    for keys in twitter:
+        # twDict dict with keys as twitter IDs and empty value
+        # twDict value should be most recent id from x user
+        tweets_list = api.user_timeline(
+            user_id=keys, count=1, tweet_mode='extended')
+        try:
+            twDict[keys] = tweets_list[0].id_str
+        except IndexError:  # if being run from tweetScrape error and user has no tweets
+            twDict[keys] = {}

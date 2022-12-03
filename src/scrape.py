@@ -2,6 +2,14 @@ from discord.ext import tasks
 import json
 from datetime import datetime, timedelta, time
 from pytz import timezone
+import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+server = os.getenv('server')
+token = os.getenv('token')
 
 
 async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, client):
@@ -12,8 +20,11 @@ async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, cli
     holo_list = main.main(args, holo_list)
     # print('firstScrape done!')
     # await refresh_access_token()
-    with open('holo_schedule.json', 'r') as f:
-        holo_schedule = json.load(f)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "holo_schedule.json"
+    })
+    holo_schedule = json.loads(r.json()['value'])
 
     scheduleWithCollabs = collabTitleUpdater(
         nickNameDict, YTClient, holo_schedule)
@@ -28,8 +39,11 @@ async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, cli
 async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_convert, client):
 
     # scraping portion
-    with open('holo_schedule.json', 'r') as f:
-        holo_schedule = json.load(f)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "holo_schedule.json"
+    })
+    holo_schedule = json.loads(r.json()['value'])
 
     args = argparser.parse_args(["--eng", "--all", "--title", "--future"])
     # flattenは不正解だけどこんな感じですね
@@ -61,17 +75,24 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
             # only if live-pinged is true, update the new list for live-pinged to be true
             if holo_schedule[j].get("url") == joinedList[i].get("url") and holo_schedule[j]["live_pinged"] == True:
                 joinedList[i]["live_pinged"] = True
-    with open('holo_schedule.json', 'w') as f:
-        json.dump(joinedList, f, indent=4)
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "holo_schedule.json",
+        "value": json.dumps(holo_schedule)
+    })
 
     # print('holo_schedule.json updated')
 
     # for history
-    try:
-        with open('history.json', 'r') as f:
-            history_dict = json.load(f)
-    except Exception:  # if empty
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "history.json"
+    })
+    if (r.json()['value'] == None):
         history_dict = []
+    else:
+        history_dict = json.loads(r.json()['value'])
+    # check this
 
     for dictEntry in history_dict:
         holo_date = dictEntry["true_date"]
@@ -84,8 +105,11 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
         if not any(holo_schedule[i]['url'] == dict['url'] for dict in joinedList):
             history_dict.append(holo_schedule[i])
 
-    with open('history.json', 'w') as f:
-        json.dump(history_dict, f, indent=4)
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "history.json",
+        "value": json.dumps(history_dict)
+    })
 
     await new_schedule(time_convert, client)
 
@@ -117,8 +141,11 @@ def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
                     if description.find(values[j]) != -1:
                         holo_schedule[i]['member'].append(keys)
 
-    with open('holo_schedule.json', 'w') as f:
-        json.dump(holo_schedule, f, indent=4)
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "holo_schedule.json",
+        "value": json.dumps(holo_schedule)
+    })
     return holo_schedule
 
 # pinging portion
@@ -126,10 +153,17 @@ def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
 
 async def new_schedule(time_convert, client):
 
-    with open('holo_schedule.json', 'r') as f:
-        holo_schedule = json.load(f)
-    with open('profiles.json', 'r') as g:
-        profiles = json.load(g)
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "profiles.json"
+    })
+    profiles = json.loads(r.json()['value'])
+
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "holo_schedule.json"
+    })
+    holo_schedule = json.loads(r.json()['value'])
 
     # list of dicts containing channel_id, user_id
     for i in range(len(holo_schedule)):  # iterate through holo_schedule
@@ -150,8 +184,12 @@ async def new_schedule(time_convert, client):
         if holo_schedule[i].get("mentioned") == False:
             # set 'mentioned' to true
             holo_schedule[i]["mentioned"] = True
-            with open('holo_schedule.json', 'w') as h:
-                json.dump(holo_schedule, h, indent=4)
+            r = requests.post(url=server, data={
+                "token": token,
+                "key": "holo_schedule.json",
+                "value": json.dumps(holo_schedule)
+            })
+
             try:
                 for k in range(len(user_list)):  # users = 1st layer of 2d array
                     idList = []
