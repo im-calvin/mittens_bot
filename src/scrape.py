@@ -30,7 +30,7 @@ async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, cli
         nickNameDict, YTClient, holo_schedule)
 
     # await asyncio.sleep(1.0)
-    await new_schedule(client)
+    await new_schedule(client, holo_schedule)
 
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
 
@@ -111,7 +111,7 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
         "value": json.dumps(history_dict)
     })
 
-    await new_schedule(client)
+    await new_schedule(client, holo_schedule)
 
 
 def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
@@ -151,19 +151,13 @@ def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
 # pinging portion
 
 
-async def new_schedule(client):
+async def new_schedule(client, holo_schedule):
 
     r = requests.get(url=server, params={
         "token": token,
         "key": "profiles.json"
     })
     profiles = json.loads(r.json()['value'])
-
-    r = requests.get(url=server, params={
-        "token": token,
-        "key": "holo_schedule.json"
-    })
-    holo_schedule = json.loads(r.json()['value'])
 
     # list of dicts containing channel_id, user_id
     for i in range(len(holo_schedule)):  # iterate through holo_schedule
@@ -208,6 +202,7 @@ async def new_schedule(client):
 
                 await channel.send('{} {} / {} \n {} \n {}'.format(header_str, time_str, relative_time_str, url, mention_str))
     # print('checking schedule')
+    # 2022/12/03 mentioned = True
     r = requests.post(url=server, data={
         "token": token,
         "key": "holo_schedule.json",

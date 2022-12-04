@@ -108,19 +108,19 @@ twDict = {}
 async def on_ready():
     # # これで前のholo_listを確認すると
     # # 前の結果で確認
-    r = requests.get(url=server, params={
-        "token": token,
-        "key": "profiles.json"
-    })
-    global profiles
-    profiles = json.loads(r.json()['value'])
+    # r = requests.get(url=server, params={
+    #     "token": token,
+    #     "key": "profiles.json"
+    # })
+    # global profiles
+    # profiles = json.loads(r.json()['value'])
 
-    r = requests.get(url=server, params={
-        "token": token,
-        "key": "holo_schedule.json"
-    })
-    global holo_schedule
-    holo_schedule = json.loads(r.json()['value'])
+    # r = requests.get(url=server, params={
+    #     "token": token,
+    #     "key": "holo_schedule.json"
+    # })
+    # global holo_schedule
+    # holo_schedule = json.loads(r.json()['value'])
 
     await firstScrape(argparser, main, nickNameDict, YTClient, time_convert, client)
     createTweet(api, twDict)
@@ -128,7 +128,7 @@ async def on_ready():
     if not get_holo_schedule.is_running() or not now_streaming.is_running() or not tweetScrape.is_running():
         get_holo_schedule.start(
             argparser, main, nickNameDict, YTClient, time_convert, client)  # background task
-        now_streaming.start(client, holo_schedule, profiles)
+        now_streaming.start(client, profiles)
         tweetScrape.start(TWClient, createTweet, twDict,
                           api, sanitizer, tweepy, client)
         botDown.start(botDownCounter=2, client=client)
