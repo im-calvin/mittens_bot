@@ -128,7 +128,7 @@ async def on_ready():
     if not get_holo_schedule.is_running() or not now_streaming.is_running() or not tweetScrape.is_running():
         get_holo_schedule.start(
             argparser, main, nickNameDict, YTClient, time_convert, client)  # background task
-        now_streaming.start(client, profiles)
+        now_streaming.start(client)
         tweetScrape.start(TWClient, createTweet, twDict,
                           api, sanitizer, tweepy, client)
         botDown.start(botDownCounter=2, client=client)

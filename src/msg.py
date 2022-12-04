@@ -253,12 +253,17 @@ async def removeall(message, msg):
 
 
 @ tasks.loop(minutes=1)
-async def now_streaming(client, profiles):
+async def now_streaming(client):
     r = requests.get(url=server, params={
         "token": token,
         "key": "holo_schedule.json"
     })
     holo_schedule = json.loads(r.json()['value'])
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "profiles.json"
+    })
+    profiles = json.loads(r.json()['value'])
 
     presentDate = datetime.now()
     now_unix = int(datetime.timestamp(presentDate))
