@@ -30,7 +30,7 @@ async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, cli
         nickNameDict, YTClient, holo_schedule)
 
     # await asyncio.sleep(1.0)
-    await new_schedule(time_convert, client)
+    await new_schedule(client)
 
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
 
@@ -111,7 +111,7 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
         "value": json.dumps(history_dict)
     })
 
-    await new_schedule(time_convert, client)
+    await new_schedule(client)
 
 
 def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
@@ -121,7 +121,7 @@ def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
         url = holo_schedule[i]['url']
         index = url.find('=')
         # if yt link (not a joqr/twtv)
-        if 'youtube' in holo_schedule[i]['title']:
+        if 'youtube' in url:
             id = url[index+1:]
             request = YTClient.videos().list(
                 part="snippet",
@@ -151,7 +151,7 @@ def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
 # pinging portion
 
 
-async def new_schedule(time_convert, client):
+async def new_schedule(client):
 
     r = requests.get(url=server, params={
         "token": token,
@@ -184,11 +184,6 @@ async def new_schedule(time_convert, client):
         if holo_schedule[i].get("mentioned") == False:
             # set 'mentioned' to true
             holo_schedule[i]["mentioned"] = True
-            r = requests.post(url=server, data={
-                "token": token,
-                "key": "holo_schedule.json",
-                "value": json.dumps(holo_schedule)
-            })
 
             try:
                 for k in range(len(user_list)):  # users = 1st layer of 2d array
@@ -213,3 +208,8 @@ async def new_schedule(time_convert, client):
 
                 await channel.send('{} {} / {} \n {} \n {}'.format(header_str, time_str, relative_time_str, url, mention_str))
     # print('checking schedule')
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "holo_schedule.json",
+        "value": json.dumps(holo_schedule)
+    })

@@ -40,7 +40,7 @@ async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_mem
     msg = ' '.join(msg[1:]).strip()
 
     if msg == 'en' or msg == 'id' or msg == 'jp' or msg == 'stars':
-        await regionSchedule(message, msg, holo_dict, client, fileName)
+        await regionSchedule(message, msg, holo_dict, client, fileName, holo_schedule)
         return
 
     indexOfMember, possibleMatch = await fuzzySearch(message, msg, lower_member_list)
@@ -63,12 +63,7 @@ async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_mem
         await message.channel.send("Couldn't find the channel you specified.")
 
 
-async def regionSchedule(message, msg, holo_dict, client, fileName):
-    r = requests.get(url=server, params={
-        "token": token,
-        "key": fileName
-    })
-    holo_schedule = json.loads(r.json()['value'])
+async def regionSchedule(message, msg, holo_dict, client, fileName, holo_schedule):
     regionList = holo_dict[msg.upper()]
     scheduleList = []
 
@@ -258,18 +253,7 @@ async def removeall(message, msg):
 
 
 @ tasks.loop(minutes=1)
-async def now_streaming(time_convert, client):
-    r = requests.get(url=server, params={
-        "token": token,
-        "key": "profiles.json"
-    })
-    profiles = json.loads(r.json()['value'])
-
-    r = requests.get(url=server, params={
-        "token": token,
-        "key": "holo_schedule.json"
-    })
-    holo_schedule = json.loads(r.json()['value'])
+async def now_streaming(client, holo_schedule, profiles):
 
     presentDate = datetime.now()
     now_unix = int(datetime.timestamp(presentDate))
@@ -293,11 +277,6 @@ async def now_streaming(time_convert, client):
         if unix_time < now_unix and holo_schedule[i].get("live_pinged") == False:
             holo_schedule[i]["live_pinged"] = True
 
-            r = requests.post(url=server, data={
-                "token": token,
-                "key": "holo_schedule.json",
-                "value": json.dumps(holo_schedule)
-            })
             try:
                 for k in range(len(user_list)):  # users = 1st layer of 2d array
                     idList = []
@@ -320,6 +299,11 @@ async def now_streaming(time_convert, client):
                     mention_str += "<@" + str(userDict[ch][i]) + "> "
 
                 await channel.send(header_str + title_str + "\n=> " + url + "\n" + mention_str)
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "holo_schedule.json",
+        "value": json.dumps(holo_schedule)
+    })
 
 
 @tasks.loop(minutes=10)
