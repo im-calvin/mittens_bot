@@ -30,7 +30,7 @@ async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, cli
         nickNameDict, YTClient, holo_schedule)
 
     # await asyncio.sleep(1.0)
-    await new_schedule(client, holo_schedule)
+    await new_schedule(client)
 
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
 
@@ -111,7 +111,7 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
         "value": json.dumps(history_dict)
     })
 
-    await new_schedule(client, holo_schedule)
+    await new_schedule(client)
 
 
 def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
@@ -141,17 +141,18 @@ def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
                     if description.find(values[j]) != -1:
                         holo_schedule[i]['member'].append(keys)
 
-    r = requests.post(url=server, data={
-        "token": token,
-        "key": "holo_schedule.json",
-        "value": json.dumps(holo_schedule)
-    })
     return holo_schedule
 
 # pinging portion
 
 
-async def new_schedule(client, holo_schedule):
+async def new_schedule(client):
+
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "holo_schedule.json"
+    })
+    holo_schedule = json.loads(r.json()['value'])
 
     r = requests.get(url=server, params={
         "token": token,
