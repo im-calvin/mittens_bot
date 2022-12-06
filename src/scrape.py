@@ -27,7 +27,7 @@ async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, cli
     holo_schedule = json.loads(r.json()['value'])
 
     scheduleWithCollabs = collabTitleUpdater(
-        nickNameDict, YTClient, holo_schedule)
+        nickNameDict, YTClient)
 
     # await asyncio.sleep(1.0)
     await new_schedule(client)
@@ -62,7 +62,7 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
         joinedList = today_list
 
     scheduleWithCollabs = collabTitleUpdater(
-        nickNameDict, YTClient, joinedList)
+        nickNameDict, YTClient)
 
     list_of_old_url = [dict['url'] for dict in holo_schedule]
 
@@ -114,7 +114,12 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
     await new_schedule(client)
 
 
-def collabTitleUpdater(nickNameDict, YTClient, holo_schedule):
+def collabTitleUpdater(nickNameDict, YTClient):
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "holo_schedule.json"
+    })
+    holo_schedule = json.loads(r.json()['value'])
 
     for i in range(len(holo_schedule)):
         title_str = holo_schedule[i]['title']
