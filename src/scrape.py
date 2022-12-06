@@ -78,7 +78,7 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
     r = requests.post(url=server, data={
         "token": token,
         "key": "holo_schedule.json",
-        "value": json.dumps(holo_schedule)
+        "value": json.dumps(joinedList)
     })
 
     # print('holo_schedule.json updated')
