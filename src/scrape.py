@@ -145,6 +145,12 @@ def collabTitleUpdater(nickNameDict, YTClient):
                     # successfully found matching str
                     if description.find(values[j]) != -1:
                         holo_schedule[i]['member'].append(keys)
+                        
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "holo_schedule.json",
+        "value": json.dumps(holo_schedule)
+    })
 
     return holo_schedule
 
