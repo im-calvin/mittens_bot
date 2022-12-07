@@ -40,7 +40,7 @@ async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_mem
     msg = ' '.join(msg[1:]).strip()
 
     if msg == 'en' or msg == 'id' or msg == 'jp' or msg == 'stars':
-        await regionSchedule(message, msg, holo_dict, client, fileName, holo_schedule)
+        await regionSchedule(message, msg, holo_dict, client, fileName)
         return
 
     indexOfMember, possibleMatch = await fuzzySearch(message, msg, lower_member_list)
@@ -63,7 +63,13 @@ async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_mem
         await message.channel.send("Couldn't find the channel you specified.")
 
 
-async def regionSchedule(message, msg, holo_dict, client, fileName, holo_schedule):
+async def regionSchedule(message, msg, holo_dict, client, fileName):
+    r = requests.get(url=server, params={
+        "token": token,
+        "key": "holo_schedule.json"
+    })
+    holo_schedule = json.loads(r.json()['value'])
+    
     regionList = holo_dict[msg.upper()]
     scheduleList = []
 
