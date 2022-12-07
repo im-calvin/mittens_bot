@@ -61,6 +61,12 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
     except TypeError:  # if tmr_list is empty
         joinedList = today_list
 
+    r = requests.post(url=server, data={
+        "token": token,
+        "key": "holo_schedule.json",
+        "value": json.dumps(joinedList)
+    })
+
     scheduleWithCollabs = collabTitleUpdater(
         nickNameDict, YTClient)
 
@@ -75,6 +81,7 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
             # only if live-pinged is true, update the new list for live-pinged to be true
             if holo_schedule[j].get("url") == joinedList[i].get("url") and holo_schedule[j]["live_pinged"] == True:
                 joinedList[i]["live_pinged"] = True
+                
     r = requests.post(url=server, data={
         "token": token,
         "key": "holo_schedule.json",
