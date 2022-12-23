@@ -160,7 +160,7 @@ async def on_message(message):
             await addchannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate, api)
 
         elif command == "remove":
-            await removechannel(message, msg, TWClient, duplicate)
+            await removechannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate)
 
         elif command == "removeall":
             await removeall(message, msg)
@@ -186,7 +186,7 @@ async def on_message(message):
             await message.channel.send(file=discord.File(msg[1]))
 
         elif command == "twadd":
-            await tweetAdd(message, msg)
+            await tweetAdd(message, msg, TWClient, tweepy, duplicate)
 
         elif command == "twlist":
             await follow_list(message, 'twitter.json', 'twitter', api)
