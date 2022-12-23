@@ -186,13 +186,13 @@ async def on_message(message):
             await message.channel.send(file=discord.File(msg[1]))
 
         elif command == "twadd":
-            await tweetAdd(message, msg, TWClient, tweepy, duplicate)
+            await tweetAdd(message, msg, TWClient, tweepy, duplicate, api)
 
         elif command == "twlist":
             await follow_list(message, 'twitter.json', 'twitter', api)
 
         elif command == "twremove":
-            await tweetRemove(message, msg, TWClient, duplicate)
+            await tweetRemove(message, msg, TWClient, duplicate, api)
 
         elif command == "transl":
             translMode = await transl(message, msg, translMode="google")

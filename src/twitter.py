@@ -15,7 +15,7 @@ server = os.getenv('server')
 token = os.getenv('token')
 
 
-async def tweetAdd(message, msg, TWClient, tweepy, duplicate):
+async def tweetAdd(message, msg, TWClient, tweepy, duplicate, api):
     vtuber_channel = ' '.join(msg[1:]).strip()
     if vtuber_channel == '':
         return
@@ -27,10 +27,10 @@ async def tweetAdd(message, msg, TWClient, tweepy, duplicate):
         return
     id = response.data.id
 
-    await duplicate(message, 'twitter.json', id, 'add')
+    await duplicate(message, 'twitter.json', id, 'add', api)
 
 
-async def tweetRemove(message, msg, TWClient, duplicate):
+async def tweetRemove(message, msg, TWClient, duplicate, api):
     vtuber_channel = ' '.join(msg[1:]).strip()
     if vtuber_channel == '':
         return
@@ -38,7 +38,7 @@ async def tweetRemove(message, msg, TWClient, duplicate):
     response = TWClient.get_user(username=vtuber_channel)
     id = response.data.id
 
-    await duplicate(message, 'twitter.json', id, 'remove')
+    await duplicate(message, 'twitter.json', id, 'remove', api)
 
 
 @tasks.loop(seconds=60)
