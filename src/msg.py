@@ -212,7 +212,7 @@ async def addchannel(message, msg, fuzzySearch, lower_member_list, all_members_l
         await message.channel.send("Couldn't find the channel you specified.")
 
 
-async def removechannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate):
+async def removechannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate, api):
     msg = ' '.join(msg[1:]).strip()
     if msg == '':
         return
@@ -224,7 +224,7 @@ async def removechannel(message, msg, fuzzySearch, lower_member_list, all_member
 
     if possibleMatch.lower() in lower_member_list:  # vtuber ch is matched
         vtuber_channel = all_members_list[indexOfMember]
-        await duplicate(message, 'profiles.json', vtuber_channel, 'remove')
+        await duplicate(message, 'profiles.json', vtuber_channel, 'remove', api)
     else:
         await message.channel.send("Couldn't find the channel you specified.")
 

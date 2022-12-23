@@ -160,7 +160,7 @@ async def on_message(message):
             await addchannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate, api)
 
         elif command == "remove":
-            await removechannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate)
+            await removechannel(message, msg, fuzzySearch, lower_member_list, all_members_list, duplicate, api)
 
         elif command == "removeall":
             await removeall(message, msg)
