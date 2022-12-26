@@ -33,7 +33,7 @@ async def duplicate(message, fileName, key, purpose, api):
     channel_id = message.channel.id
     r = requests.get(url=server, params={
         "token": token,
-        "key": "profiles.json"
+        "key": fileName
     })
     profiles = json.loads(r.json()['value'])
 
@@ -60,7 +60,7 @@ async def duplicate(message, fileName, key, purpose, api):
 
             r = requests.post(url=server, data={
                 "token": token,
-                "key": "profiles.json",
+                "key": fileName,
                 "value": json.dumps(profiles)
             })
             if fileName == 'twitter.json':
@@ -80,7 +80,7 @@ async def duplicate(message, fileName, key, purpose, api):
         if purpose == 'add':
             r = requests.post(url=server, data={
                 "token": token,
-                'key': "profiles.json",
+                'key': fileName,
                 'value': json.dumps(profiles)
             })
             await message.channel.send("I appreciate your enthusiasm but you can't follow **" + key + "** twice. \nTry making another account?")
@@ -88,7 +88,7 @@ async def duplicate(message, fileName, key, purpose, api):
         if purpose == 'remove':
             r = requests.post(url=server, data={
                 'token': token,
-                'key': "profiles.json",
+                'key': fileName,
                 'value': json.dumps(profiles)
             })
             if fileName == 'twitter.json':
@@ -108,7 +108,7 @@ async def duplicate(message, fileName, key, purpose, api):
             }]
         r = requests.post(url=server, data={
             "token": token,
-            "key": "profiles.json",
+            "key": fileName,
             "value": json.dumps(profiles)
         })
         if fileName == 'twitter.json':
