@@ -198,8 +198,8 @@ async def sendTweetMsg(apiObj, header_str, mention_str, noPic, isRef, keys, valu
             await channel.send(content=header_str + tweetTxt + '\n' + tweetURL + '\n' + mention_str, file=discord.File(data, 'img.jpg'))
 
 
-def createTweet(api, twDict):
-
+def createTweet(api):
+    global twDict
     r = requests.get(url=server, params={
         "token": token,
         "key": "twitter.json"

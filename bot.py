@@ -123,7 +123,7 @@ async def on_ready():
     # holo_schedule = json.loads(r.json()['value'])
 
     await firstScrape(argparser, main, nickNameDict, YTClient, time_convert, client)
-    createTweet(api, twDict)
+    createTweet(api)
 
     if not get_holo_schedule.is_running() or not now_streaming.is_running() or not tweetScrape.is_running():
         get_holo_schedule.start(
