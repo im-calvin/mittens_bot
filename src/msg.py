@@ -66,10 +66,10 @@ async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_mem
 async def regionSchedule(message, msg, holo_dict, client, fileName):
     r = requests.get(url=server, params={
         "token": token,
-        "key": "holo_schedule.json"
+        "key": fileName
     })
     holo_schedule = json.loads(r.json()['value'])
-    
+
     regionList = holo_dict[msg.upper()]
     scheduleList = []
 
