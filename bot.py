@@ -291,13 +291,16 @@ holoSTARS = all_members_list[all_members_list.index(
     'holostars')+1:all_members_list.index('holoID')]
 holoID = all_members_list[all_members_list.index(
     'holoID')+1:all_members_list.index('holoEN')]
-holoEN = all_members_list[all_members_list.index('holoEN')+1:]
+holoEN = all_members_list[all_members_list.index(
+    'holoEN')+1:all_members_list.index('holostarsEN')]
+holostarsEN = all_members_list[all_members_list.index('holostarsEN')+1:]
 
 holo_dict = {
     'JP': holoJP,
     'EN': holoEN,
     'ID': holoID,
-    'STARS': holoSTARS
+    'STARS': holoSTARS,
+    'STARSEN': holostarsEN,
 }
 
 nickNameDict = {

@@ -39,7 +39,7 @@ async def specificSchedule(message, msg, fuzzySearch, lower_member_list, all_mem
     holo_schedule = json.loads(r.json()['value'])
     msg = ' '.join(msg[1:]).strip()
 
-    if msg == 'en' or msg == 'id' or msg == 'jp' or msg == 'stars':
+    if msg == 'en' or msg == 'id' or msg == 'jp' or msg == 'stars' or msg == 'starsen':
         await regionSchedule(message, msg, holo_dict, client, fileName)
         return
 

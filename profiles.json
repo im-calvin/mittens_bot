@@ -5,10 +5,7 @@
   "Sakura Miko": [],
   "AZKi": [],
   "Shirakami Fubuki": [
-    {
-      "channel_id": 1039046281366093885,
-      "user_id": 535296448233996288
-    }
+    { "channel_id": 1039046281366093885, "user_id": 535296448233996288 }
   ],
   "Natsuiro Matsuri": [],
   "Yozora Mel": [],
@@ -30,15 +27,17 @@
   "Uruha Rushia": [],
   "Hoshimachi Suisei": [],
   "Amane Kanata": [],
-  "Tsunomaki Watame": [],
+  "Tsunomaki Watame": [
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 }
+  ],
   "Tokoyami Towa": [],
   "Himemori Luna": [],
   "Yukihana Lamy": [],
   "Momosuzu Nene": [],
   "Sishiro Botan": [],
   "Omaru Polka": [],
-  "La+ Darknesss": [],
-  "Takane Lui": [],
+  "La  Darknesss": [],
+  "Takane Lui": [{ "channel_id": 993032295902629888, "user_id": 182310565333565440 }],
   "Hakui Koyori": [],
   "Sakamata Chloe": [],
   "Kazama Iroha": [],
@@ -61,118 +60,56 @@
   "Airani Iofifteen": [],
   "Kureiji Ollie": [],
   "Anya Melfissa": [],
-  "Pavolia Reine": [],
-  "Vestia Zeta": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    }
-  ],
+  "Pavolia Reine": [{ "channel_id": 993032295902629888, "user_id": 277908415857295361 }],
+  "Vestia Zeta": [{ "channel_id": 993032295902629888, "user_id": 182310565333565440 }],
   "Kaela Kovalskia": [],
-  "Kobo Kanaeru": [],
+  "Kobo Kanaeru": [{ "channel_id": 993032295902629888, "user_id": 277908415857295361 }],
   "holoID": [],
   "Mori Calliope": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    }
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 },
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 }
   ],
   "Takanashi Kiara": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    }
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 },
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 }
   ],
   "Ninomae Ina'nis": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    }
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 },
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 }
   ],
   "Gawr Gura": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    }
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 },
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 }
   ],
   "Watson Amelia": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    }
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 },
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 }
   ],
   "holoEN": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    },
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    }
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 },
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 }
   ],
-  "IRyS": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    }
-  ],
-  "Tsukumo Sana": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    }
-  ],
+  "IRyS": [{ "channel_id": 993032295902629888, "user_id": 277908415857295361 }],
+  "Tsukumo Sana": [{ "channel_id": 993032295902629888, "user_id": 277908415857295361 }],
   "Ceres Fauna": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    },
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    }
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 },
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 }
   ],
-  "Ouro Kronii": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    }
-  ],
+  "Ouro Kronii": [{ "channel_id": 993032295902629888, "user_id": 277908415857295361 }],
   "Nanashi Mumei": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 277908415857295361
-    },
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    }
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 },
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 }
   ],
   "Hakos Baelz": [
-    {
-      "channel_id": 993032295902629888,
-      "user_id": 182310565333565440
-    }
+    { "channel_id": 993032295902629888, "user_id": 182310565333565440 },
+    { "channel_id": 993032295902629888, "user_id": 277908415857295361 }
   ],
   "Syrios": [],
   "Vesper": [],
   "Altare": [],
-  "Dezmond": []
+  "Dezmond": [],
+  "Bettel": [],
+  "Flayon": [],
+  "Hakka": [],
+  "Shinri": []
 }
