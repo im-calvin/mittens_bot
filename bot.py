@@ -84,7 +84,7 @@ lower_member_list = [x.lower() for x in all_members_list]
 PREFIX = "$"
 holo_list = []
 twDict = {}
-
+botDownCounter = 2
 
 # createProfile()
 # r = requests.get(url=server, params={
@@ -131,7 +131,7 @@ async def on_ready():
         now_streaming.start(client)
         tweetScrape.start(TWClient, createTweet, twDict,
                           api, sanitizer, tweepy, client)
-        botDown.start(botDownCounter=2, client=client)
+        botDown.start(client=client)
 
     print("もしもし")
 
@@ -147,6 +147,10 @@ async def on_message(message):
 
     flag = await exceptions(message, client)
     if flag == "bruh what":
+        return
+    elif flag == "reset":
+        global botDownCounter
+        botDownCounter = 2
         return
 
     # profiles
@@ -319,5 +323,15 @@ nickNameDict = {
     "La+ Darknesss": ["@Laplus ch. ラプラス・ダークネス - holoX -"],
     "Momosuzu Nene": ["@Nene Ch.桃鈴ねね"]
 }
+
+
+@tasks.loop(minutes=10)
+async def botDown(client):
+    global botDownCounter
+    channel = await client.fetch_channel("739187928248483860")
+    botDownCounter -= 1
+    if (botDownCounter == 0):
+        await channel.send("<@277908415857295361> UR BOT IS DED")
+    await channel.send("meow")
 
 client.run(TOKEN)

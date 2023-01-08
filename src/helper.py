@@ -214,7 +214,7 @@ async def exceptions(message, client):
     if message.author == client.user:  # base case
         return "bruh what"
     if message.channel.id == "739187928248483860" and message.author.id == "631599913490186282":
-        botDownCounter = 2
+        return "reset"  # reset botDownCounter=2
     if message.author.bot and message.channel.id != "739187928248483860":  # bot doesn't respond to other bots
         return "bruh what"
     if message.author.bot:
