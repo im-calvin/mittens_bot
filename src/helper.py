@@ -206,8 +206,8 @@ async def lyrics(message, msg, genius, client):
 
 def sanitizer(msg):
     msg = re.sub(r'http\S+', '', msg)  # links
-    msg = re.sub(r'<.+>', '', msg)
-    return msg.strip()  # emotes
+    msg = re.sub(r'<.+>', '', msg)  # emotes
+    return msg.strip()
 
 
 async def exceptions(message, client):
