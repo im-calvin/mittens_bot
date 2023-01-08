@@ -44,7 +44,7 @@ async def tweetRemove(message, msg, TWClient, duplicate, api):
 @tasks.loop(seconds=60)
 async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy, client):
     try:
-        r = requests.get(url=server, data={
+        r = requests.get(url=server, params={
             "token": token,
             "key": "twitter.json"
         })
@@ -64,7 +64,7 @@ async def tweetScrape(TWClient, createTweet, twDict, api, sanitizer, tweepy, cli
                                                         "attachments.media_keys", "referenced_tweets.id", "author_id"], since_id=twDict[keys])
             except KeyError:  # if twitter user was added while the bot was running
                 # THIS ERROR ISN'T FIXED
-                createTweet(api, twDict)
+                createTweet(api)
                 return
 
             # debugging line:
