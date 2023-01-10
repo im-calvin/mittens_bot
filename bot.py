@@ -151,7 +151,6 @@ async def on_message(message):
     elif flag == "reset":
         global botDownCounter
         botDownCounter = 2
-        message.channel.send(f'botDownCounter={botDownCounter}')
         return
 
     # profiles
