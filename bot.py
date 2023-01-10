@@ -332,6 +332,7 @@ async def botDown(client):
     botDownCounter -= 1
     if (botDownCounter == 0):
         await channel.send("<@277908415857295361> UR BOT IS DED")
-    await channel.send("meow")
+    else:
+        await channel.send(botDownCounter)
 
 client.run(TOKEN)
