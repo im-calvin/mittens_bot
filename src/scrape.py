@@ -5,11 +5,14 @@ from pytz import timezone
 import requests
 import os
 from dotenv import load_dotenv
+from .yt import *
 
 load_dotenv()
 
 server = os.getenv('server')
 token = os.getenv('token')
+
+youtube_channel_id_arr = ['UC5XQhzMH08PgWa4Zp02Gcsw']
 
 
 async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, client):
@@ -60,6 +63,9 @@ async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_conver
         joinedList = today_list + tomorrow_list
     except TypeError:  # if tmr_list is empty
         joinedList = today_list
+
+    for id in youtube_channel_id_arr:
+        getScheduledStreams(id, holo_schedule=joinedList)
 
     r = requests.post(url=server, data={
         "token": token,

@@ -16,7 +16,6 @@ from furigana.furigana import print_plaintext
 from holo_schedule import main
 from discord.ext import commands, tasks
 import argparse
-import asyncio
 
 from datetime import datetime, timedelta, time
 import time as ttime
