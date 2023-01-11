@@ -33,7 +33,7 @@ def getScheduledStreams(chID, holo_schedule):
     for item in response['items']:
         id = item['id']['videoId']
         yt_url = f'https://www.youtube.com/watch?v={id}'
-        # if there is a thing in the list > 0
+        # if there is a thing in the list, len > 0 (ie: if yt_url already exists in holo_schedule don't want to duplicate)
         if (len([yt_url for entry in holo_schedule if entry['url'] == yt_url]) > 0):
             continue
         # iso_time = item['snippet']['publishedAt']  # time in RFC3339 format ; this actually gives published time
@@ -59,8 +59,10 @@ def getScheduledStreams(chID, holo_schedule):
         holo_date = ""
         if (today_date == schedule_date):
             holo_date = "today"
-        else:
+        elif (today_date + timedelta(days=1) == schedule_date):
             holo_date = "tomorrow"
+        else:
+            continue  # don't post to holo_schedule if the date isn't tomorrow in the future
         schedule_time_string = schedule_time.strftime('%H:%M')
         unix_time = time_convert(schedule_time_string.split(':'), holo_date)
         holo_schedule.append({
@@ -77,6 +79,5 @@ def getScheduledStreams(chID, holo_schedule):
     for dict in holo_schedule:
         if "月紫アリア / Tsukushi Aria" in dict['member'] and dict['live_pinged'] == True:
             holo_schedule.remove(dict)
-
 
 # getScheduledStreams(watame_id, [])
