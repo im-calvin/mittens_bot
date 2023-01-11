@@ -73,6 +73,10 @@ def getScheduledStreams(chID, holo_schedule):
             "live_pinged": False,
             "true_date": unix_time
         })
+    # remove streams
+    for dict in holo_schedule:
+        if "月紫アリア / Tsukushi Aria" in dict['member'] and dict['live_pinged'] == True:
+            holo_schedule.remove(dict)
 
 
 # getScheduledStreams(watame_id, [])
