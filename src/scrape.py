@@ -38,7 +38,7 @@ async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, cli
 # scrapes website and then pings user on a rolling basis whenever new holo_schedule comes out
 
 
-@ tasks.loop(seconds=15*60)
+@ tasks.loop(seconds=20*60)
 async def get_holo_schedule(argparser, main, nickNameDict, YTClient, time_convert, client):
 
     # scraping portion

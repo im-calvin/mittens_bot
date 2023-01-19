@@ -20,6 +20,8 @@ watame_id = 'UCqm3BQLlJfvkTsX_hvm0UmA'
 
 
 def getScheduledStreams(chID, holo_schedule):
+    if (holo_schedule == None):
+        return
     request = YTClient.search().list(
         part="id,snippet",
         channelId=chID,
