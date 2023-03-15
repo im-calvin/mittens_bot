@@ -7,8 +7,8 @@ import os
 import dateparser as dp
 from datetime import date, datetime, time
 from pytz import timezone
-# from src.helper import *
-from helper import *
+from src.helper import *
+# from helper import *
 
 load_dotenv()
 TRANSLATE_TOKEN = os.getenv('TRANSLATE_TOKEN')
@@ -84,4 +84,4 @@ def getScheduledStreams(chID, holo_schedule):
             holo_schedule.remove(dict)
 
 
-getScheduledStreams([watame_id, tsukushi_id], [])
+# getScheduledStreams([watame_id, tsukushi_id], [])
