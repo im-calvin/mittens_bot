@@ -324,14 +324,14 @@ nickNameDict = {
 }
 
 
-@tasks.loop(minutes=10)
-async def botDown(client):
-    global botDownCounter
-    channel = await client.fetch_channel("739187928248483860")
-    botDownCounter -= 1
-    if (botDownCounter == 0):
-        await channel.send("<@277908415857295361> UR BOT IS DED")
-    else:
-        await channel.send(botDownCounter)
+# @tasks.loop(minutes=10)
+# async def botDown(client):
+#     global botDownCounter
+#     channel = await client.fetch_channel("739187928248483860")
+#     botDownCounter -= 1
+#     if (botDownCounter == 0):
+#         await channel.send("<@277908415857295361> UR BOT IS DED")
+#     else:
+#         await channel.send(botDownCounter)
 
 client.run(TOKEN)

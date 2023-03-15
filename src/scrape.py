@@ -27,7 +27,7 @@ async def firstScrape(argparser, main, nickNameDict, YTClient, time_convert, cli
         "token": token,
         "key": "holo_schedule.json"
     })
-    holo_schedule = json.loads(r.json()['value'])
+    holo_schedule = json.loaPds(r.json()['value'])
 
     scheduleWithCollabs = collabTitleUpdater(
         nickNameDict, YTClient)

@@ -7,7 +7,8 @@ import os
 import dateparser as dp
 from datetime import date, datetime, time
 from pytz import timezone
-from src.helper import *
+# from src.helper import *
+from helper import *
 
 load_dotenv()
 TRANSLATE_TOKEN = os.getenv('TRANSLATE_TOKEN')
@@ -82,4 +83,5 @@ def getScheduledStreams(chID, holo_schedule):
         if "月紫アリア / Tsukushi Aria" in dict['member'] and dict['live_pinged'] == True:
             holo_schedule.remove(dict)
 
-# getScheduledStreams(watame_id, [])
+
+getScheduledStreams([watame_id, tsukushi_id], [])
